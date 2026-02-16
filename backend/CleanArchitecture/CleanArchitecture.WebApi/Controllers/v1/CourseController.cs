@@ -52,6 +52,7 @@ namespace CleanArchitecture.WebApi.Controllers.v1
         }
 
         [HttpGet("get-all")]
+        [ApiExplorerSettings(IgnoreApi = true)] // Hides from Swagger to avoid schema generation hang (Expression in GetAllCoursesQuery)
         public async Task<ActionResult<ApiResponse<PagedResponse<CourseListingDTO>>>> GetAllCourses([FromQuery] GetAllCoursesQuery query)
         {
             var result = await Mediator.Send(query);
@@ -79,6 +80,7 @@ namespace CleanArchitecture.WebApi.Controllers.v1
         }
 
         [HttpGet("get-for-current-user")]
+        [ApiExplorerSettings(IgnoreApi = true)] // Hides from Swagger to avoid schema generation hang (Expression in GetAllCoursesQuery)
         public async Task<ActionResult<ApiResponse<PagedResponse<CourseListingDTO>>>> GetCourseForCurrentUser([FromQuery] GetAllCoursesQuery query)
         {
             var result = await Mediator.Send(new GetAllCoursesQuery
