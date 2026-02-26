@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using CleanArchitecture.Core.Entities.Attendances;
+using CleanArchitecture.Core.Entities.Courses;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 
 namespace CleanArchitecture.WebApi.Extensions
 {
@@ -13,9 +16,17 @@ namespace CleanArchitecture.WebApi.Extensions
         {
             services.AddSwaggerGen(c =>
             {
+                // Prevent Swagger from reflecting Expression types (causes hang/timeout)
+                c.MapType<Expression<Func<Course, bool>>>(() => new OpenApiSchema { Type = "object", Description = "Filter (not documented)." });
+                c.MapType<Expression<Func<Attendance, bool>>>(() => new OpenApiSchema { Type = "object", Description = "Filter (not documented)." });
+
                 var xmlFile = "CleanArchitecture.WebApi.xml";
                 var xmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
+                if (File.Exists(xmlPath))
+                    c.IncludeXmlComments(xmlPath);
+                // Schema filter for any other Expression-like types
+                c.SchemaFilter<SwaggerExpressionSchemaFilter>();
+                c.CustomSchemaIds(type => type.FullName ?? type.Name);
 
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {

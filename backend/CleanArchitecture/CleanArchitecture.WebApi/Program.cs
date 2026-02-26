@@ -62,7 +62,7 @@ app.UseEndpoints(endpoints =>
 Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(app.Configuration)
                 .CreateLogger();
-
+/*
 //Seed Default Data
 using (var scope = app.Services.CreateScope())
 {
@@ -88,6 +88,6 @@ using (var scope = app.Services.CreateScope())
         Log.CloseAndFlush();
     }
 }
-
+*/
 //Start the application
 app.Run();
