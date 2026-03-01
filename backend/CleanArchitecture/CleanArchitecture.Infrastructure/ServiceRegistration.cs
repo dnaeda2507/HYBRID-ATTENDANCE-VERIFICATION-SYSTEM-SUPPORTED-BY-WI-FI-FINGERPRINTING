@@ -107,6 +107,17 @@ namespace CleanArchitecture.Infrastructure
             services.AddTransient<IAttendanceRepositoryAsync, AttendanceRepositoryAsync>();
             services.AddTransient<IDepartmantRepositoryAsync, DepartmantRepositoryAsync>();
             #endregion
+
+
+            services.AddTransient<IStudentWifiScanRepositoryAsync, StudentWifiScanRepositoryAsync>();
+            services.AddTransient<IWifiTrainingSampleRepositoryAsync, WifiTrainingSampleRepositoryAsync>();
+
+            services.AddTransient<IStudentWifiScanService, StudentWifiScanService>();
+            services.AddTransient<IWifiTrainingSampleService, WifiTrainingSampleService>();
+
         }
     }
 }
+
+
+

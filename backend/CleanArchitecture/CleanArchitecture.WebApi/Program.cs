@@ -3,6 +3,7 @@ using CleanArchitecture.Core;
 using CleanArchitecture.Core.Entities;
 using CleanArchitecture.Core.Interfaces;
 using CleanArchitecture.Infrastructure;
+using CleanArchitecture.Application.Mappings;
 using CleanArchitecture.WebApi.Extensions;
 using CleanArchitecture.WebApi.Services;
 using Microsoft.AspNetCore.Builder;
@@ -23,6 +24,8 @@ builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true
 // Add services to the container.
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
+
+builder.Services.AddAutoMapper(typeof(WifiProfile).Assembly);
 builder.Services.AddSwaggerExtension();
 builder.Services.AddControllers();
 builder.Services.AddApiVersioningExtension();
@@ -62,7 +65,7 @@ app.UseEndpoints(endpoints =>
 Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(app.Configuration)
                 .CreateLogger();
-/*
+
 //Seed Default Data
 using (var scope = app.Services.CreateScope())
 {
@@ -88,6 +91,6 @@ using (var scope = app.Services.CreateScope())
         Log.CloseAndFlush();
     }
 }
-*/
+/**/
 //Start the application
 app.Run();
