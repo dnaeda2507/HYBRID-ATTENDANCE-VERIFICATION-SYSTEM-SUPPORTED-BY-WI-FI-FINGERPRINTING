@@ -19,6 +19,15 @@ class AttendanceRecord {
   }
 }
 
+class WifiAccessPoint {
+  final String bssid;
+  final int rssi;
+
+  WifiAccessPoint({required this.bssid, required this.rssi});
+
+  Map<String, dynamic> toJson() => {'bssid': bssid, 'rssi': rssi};
+}
+
 class AttendanceService {
   final Dio _dio = ApiClient.instance.dio;
   final _storage = FlutterSecureStorage();
@@ -42,6 +51,37 @@ class AttendanceService {
       return response;
     } catch (_) {
       throw Exception('Error sending attendance');
+    }
+  }
+
+  /// Wi‑Fi fingerprint ile yoklama isteği
+  Future<Response<dynamic>> sendWifiScan({
+    required int sessionId,
+    required List<WifiAccessPoint> accessPoints,
+  }) async {
+    try {
+      final token = await _storage.read(key: 'jwt');
+      final userId = await _storage.read(key: 'user_id');
+      if (token == null || userId == null) {
+        throw Exception('User id or JWT token not found');
+      }
+
+      final payload = {
+        'studentId': userId,
+        'sessionId': sessionId,
+        'scannedAtUtc': DateTime.now().toUtc().toIso8601String(),
+        'accessPoints': accessPoints.map((e) => e.toJson()).toList(),
+      };
+
+      final response = await _dio.post(
+        '/api/wifi/scans',
+        data: payload,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      return response;
+    } catch (_) {
+      throw Exception('Error sending wifi scan');
     }
   }
 

@@ -3,7 +3,10 @@ import 'package:application/screens/attended/qr_view.dart';
 import 'package:application/services/attendance_service.dart';
 import 'package:application/services/lecture_service.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:wifi_scan/wifi_scan.dart' as wifi_scan;
+import 'package:permission_handler/permission_handler.dart';
 import 'attended_courses_list.dart';
 
 class AttendedPage extends StatefulWidget {
@@ -38,11 +41,12 @@ class _AttendedPageState extends State<AttendedPage> {
   }
 
   void _filterLectures(String query) {
-    final filtered = _attendedLectures.where((lecture) {
-      return lecture.lectureName.toLowerCase().contains(
+    final filtered =
+        _attendedLectures.where((lecture) {
+          return lecture.lectureName.toLowerCase().contains(
             query.toLowerCase(),
           );
-    }).toList();
+        }).toList();
 
     setState(() {
       _filteredLectures = filtered;
@@ -61,16 +65,17 @@ class _AttendedPageState extends State<AttendedPage> {
   void _showSuccessDialog(BuildContext context, Response<dynamic> response) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Success'),
-        content: Text(response.data['message']),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Success'),
+            content: Text(response.data['message']),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -81,16 +86,17 @@ class _AttendedPageState extends State<AttendedPage> {
     }
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(errorMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -170,6 +176,169 @@ class _AttendedPageState extends State<AttendedPage> {
         const SnackBar(content: Text("QR code could not be read.")),
       );
     }
+  }
+
+  /// Placeholder: burada gerçek Wi‑Fi taramasını yapıp
+  /// BSSID / RSSI listesini döndüreceksin.
+  Future<List<WifiAccessPoint>> _collectWifiAccessPoints() async {
+    // İzinleri kontrol et (Android için konum izni gereklidir)
+    final permissionGranted = await _ensureLocationPermission();
+    if (!permissionGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Location permission is required for Wi‑Fi scanning.'),
+        ),
+      );
+      return <WifiAccessPoint>[];
+    }
+    // Web tarayıcıda Wi‑Fi taraması desteklenmez.
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Wi‑Fi scanning is not available on web.'),
+        ),
+      );
+      return <WifiAccessPoint>[];
+    }
+
+    try {
+      await wifi_scan.WifiScan.instance.startScan();
+      await Future.delayed(const Duration(milliseconds: 800));
+      final results = await wifi_scan.WifiScan.instance.getScannedResults();
+      if (results == null || results.isEmpty) {
+        // Emülatör veya izin eksikse sonuç gelmeyebilir. Lokal test için mock öner.
+        final useMock =
+            await showDialog<bool>(
+              context: context,
+              builder:
+                  (dctx) => AlertDialog(
+                    title: const Text('No Wi‑Fi results'),
+                    content: const Text(
+                      'No access points were found. Use mock Wi‑Fi data for local testing?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dctx).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(dctx).pop(true),
+                        child: const Text('Use mock'),
+                      ),
+                    ],
+                  ),
+            ) ??
+            false;
+
+        if (useMock) {
+          return <WifiAccessPoint>[
+            WifiAccessPoint(bssid: '00:11:22:33:44:55', rssi: -45),
+            WifiAccessPoint(bssid: '66:77:88:99:AA:BB', rssi: -60),
+            WifiAccessPoint(bssid: 'CC:DD:EE:FF:00:11', rssi: -70),
+          ];
+        }
+
+        return <WifiAccessPoint>[];
+      }
+
+      return results.map((r) {
+        final bssid = (r.bssid ?? '').toString();
+        final level = r.level ?? 0;
+        return WifiAccessPoint(bssid: bssid, rssi: level);
+      }).toList();
+    } catch (e) {
+      print('Wi‑Fi scan error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error during Wi‑Fi scan.')));
+      return <WifiAccessPoint>[];
+    }
+  }
+
+  Future<bool> _ensureLocationPermission() async {
+    // permission_handler ile konum izinini kontrol et ve gerekirse iste
+    try {
+      final status = await Permission.location.status;
+      if (status.isGranted) return true;
+
+      final result = await Permission.location.request();
+      if (result.isGranted) return true;
+
+      // Android 12+ için ek izinler gerekebilir; burada basit davranıyoruz
+      return false;
+    } catch (e) {
+      print('Permission check error: $e');
+      return false;
+    }
+  }
+
+  void _attendWithWifi(BuildContext context) {
+    final TextEditingController codeController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Enter Attendance Code"),
+          content: TextField(
+            controller: codeController,
+            decoration: const InputDecoration(hintText: "sessionId:token"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+
+                final input = codeController.text.trim();
+                if (input.isEmpty || !input.contains(':')) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Invalid input format")),
+                  );
+                  return;
+                }
+
+                final parts = input.split(':');
+                final sessionId = int.tryParse(parts[0]) ?? 0;
+                if (sessionId == 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Invalid session id")),
+                  );
+                  return;
+                }
+
+                try {
+                  final aps = await _collectWifiAccessPoints();
+                  if (aps.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("No Wi‑Fi access points found."),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final response = await AttendanceService().sendWifiScan(
+                    sessionId: sessionId,
+                    accessPoints: aps,
+                  );
+
+                  if (response.data['success'] == true) {
+                    _showSuccessDialog(context, response);
+                  } else {
+                    _showErrorDialog(context, response);
+                  }
+                } catch (_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Error sending Wi‑Fi scan.")),
+                  );
+                }
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -303,73 +472,111 @@ class _AttendedPageState extends State<AttendedPage> {
             ),
           ),
           Expanded(
-            child: _selectedTab == 0
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 340,
-                            height: 70,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _askForPassword(context),
-                              icon: const Icon(Icons.lock, color: Colors.blue),
-                              label: const Text(
-                                "Attend using a password",
-                                style: TextStyle(
-                                  fontSize: 18,
+            child:
+                _selectedTab == 0
+                    ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 340,
+                              height: 70,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _askForPassword(context),
+                                icon: const Icon(
+                                  Icons.lock,
                                   color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
                                 ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
+                                label: const Text(
+                                  "Attend using a password",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.blue),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.blue),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: 340,
-                            height: 70,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _openQRSystem(context),
-                              icon: const Icon(Icons.qr_code_scanner, color: Colors.blue),
-                              label: const Text(
-                                "Scan QR Code",
-                                style: TextStyle(
-                                  fontSize: 18,
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: 340,
+                              height: 70,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _openQRSystem(context),
+                                icon: const Icon(
+                                  Icons.qr_code_scanner,
                                   color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
                                 ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
+                                label: const Text(
+                                  "Scan QR Code",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.blue),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.blue),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: 340,
+                              height: 70,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _attendWithWifi(context),
+                                icon: const Icon(
+                                  Icons.wifi,
+                                  color: Colors.blue,
+                                ),
+                                label: const Text(
+                                  "Attend via Wi‑Fi",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.blue),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                : const AttendedCoursesList(),
+                    )
+                    : const AttendedCoursesList(),
           ),
         ],
       ),
@@ -380,12 +587,12 @@ class _AttendedPageState extends State<AttendedPage> {
 class CustomSearchDelegate extends SearchDelegate<String> {
   final List<CourseListingDTO> lectures;
   final Function(String) onSearch;
-  final Function(String, int) onLectureTap; 
+  final Function(String, int) onLectureTap;
 
   CustomSearchDelegate({
     required this.lectures,
     required this.onSearch,
-    required this.onLectureTap, 
+    required this.onLectureTap,
   });
 
   @override
@@ -413,45 +620,49 @@ class CustomSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final results = lectures.where((lecture) {
-      return lecture.lectureName.toLowerCase().contains(
+    final results =
+        lectures.where((lecture) {
+          return lecture.lectureName.toLowerCase().contains(
             query.toLowerCase(),
           );
-    }).toList();
+        }).toList();
 
     return ListView(
-      children: results.map((lecture) {
-        return ListTile(
-          title: Text(lecture.lectureName),
-          onTap: () {
-            onLectureTap(lecture.lectureName, lecture.id);
-            close(context, lecture.lectureName);
-          },
-        );
-      }).toList(),
+      children:
+          results.map((lecture) {
+            return ListTile(
+              title: Text(lecture.lectureName),
+              onTap: () {
+                onLectureTap(lecture.lectureName, lecture.id);
+                close(context, lecture.lectureName);
+              },
+            );
+          }).toList(),
     );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = lectures.where((lecture) {
-      return lecture.lectureName.toLowerCase().contains(
+    final suggestions =
+        lectures.where((lecture) {
+          return lecture.lectureName.toLowerCase().contains(
             query.toLowerCase(),
           );
-    }).toList();
+        }).toList();
 
     return ListView(
-      children: suggestions.map((lecture) {
-        return ListTile(
-          title: Text(lecture.lectureName),
-          onTap: () {
-            query = lecture.lectureName;
-            onSearch(query);
-            onLectureTap(lecture.lectureName, lecture.id);
-            showResults(context);
-          },
-        );
-      }).toList(),
+      children:
+          suggestions.map((lecture) {
+            return ListTile(
+              title: Text(lecture.lectureName),
+              onTap: () {
+                query = lecture.lectureName;
+                onSearch(query);
+                onLectureTap(lecture.lectureName, lecture.id);
+                showResults(context);
+              },
+            );
+          }).toList(),
     );
   }
 }

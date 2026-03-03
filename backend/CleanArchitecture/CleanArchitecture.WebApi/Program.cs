@@ -3,6 +3,8 @@ using CleanArchitecture.Core;
 using CleanArchitecture.Core.Entities;
 using CleanArchitecture.Core.Interfaces;
 using CleanArchitecture.Infrastructure;
+using CleanArchitecture.Infrastructure.Services;
+using CleanArchitecture.Application.Interfaces;
 using CleanArchitecture.Application.Mappings;
 using CleanArchitecture.WebApi.Extensions;
 using CleanArchitecture.WebApi.Services;
@@ -30,7 +32,19 @@ builder.Services.AddSwaggerExtension();
 builder.Services.AddControllers();
 builder.Services.AddApiVersioningExtension();
 builder.Services.AddHealthChecks();
+
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+
+// StudentWifiScanService → ML tahminini de çağıracak şekilde
+builder.Services.AddScoped<IStudentWifiScanService, StudentWifiScanService>();
+
+// WifiTrainingSampleService → Eğitim örneklerini DB’ye kaydetmek için
+builder.Services.AddScoped<IWifiTrainingSampleService, WifiTrainingSampleService>();
+
+builder.Services.AddHttpClient<IWifiPredictionService, WifiPredictionService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8000"); // ML Agent URL
+});
 
 //Build the application
 var app = builder.Build();
