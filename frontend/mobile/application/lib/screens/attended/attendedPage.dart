@@ -21,6 +21,7 @@ class _AttendedPageState extends State<AttendedPage> {
   List<CourseListingDTO> _attendedLectures = [];
   List<CourseListingDTO> _filteredLectures = [];
   final LectureService _lectureService = LectureService();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -178,10 +179,8 @@ class _AttendedPageState extends State<AttendedPage> {
     }
   }
 
-  /// Placeholder: burada gerçek Wi‑Fi taramasını yapıp
-  /// BSSID / RSSI listesini döndüreceksin.
+  /// Perform a Wi‑Fi scan and return a list of app DTO `WifiAccessPoint`.
   Future<List<WifiAccessPoint>> _collectWifiAccessPoints() async {
-    // İzinleri kontrol et (Android için konum izni gereklidir)
     final permissionGranted = await _ensureLocationPermission();
     if (!permissionGranted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -191,7 +190,7 @@ class _AttendedPageState extends State<AttendedPage> {
       );
       return <WifiAccessPoint>[];
     }
-    // Web tarayıcıda Wi‑Fi taraması desteklenmez.
+
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -202,42 +201,22 @@ class _AttendedPageState extends State<AttendedPage> {
     }
 
     try {
-      await wifi_scan.WifiScan.instance.startScan();
+      final canScan = await wifi_scan.WiFiScan.instance.canStartScan();
+      if (canScan != wifi_scan.CanStartScan.yes) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Cannot start scan: $canScan')));
+        return <WifiAccessPoint>[];
+      }
+
+      await wifi_scan.WiFiScan.instance.startScan();
       await Future.delayed(const Duration(milliseconds: 800));
-      final results = await wifi_scan.WifiScan.instance.getScannedResults();
+      final results = await wifi_scan.WiFiScan.instance.getScannedResults();
+
       if (results == null || results.isEmpty) {
-        // Emülatör veya izin eksikse sonuç gelmeyebilir. Lokal test için mock öner.
-        final useMock =
-            await showDialog<bool>(
-              context: context,
-              builder:
-                  (dctx) => AlertDialog(
-                    title: const Text('No Wi‑Fi results'),
-                    content: const Text(
-                      'No access points were found. Use mock Wi‑Fi data for local testing?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(dctx).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(dctx).pop(true),
-                        child: const Text('Use mock'),
-                      ),
-                    ],
-                  ),
-            ) ??
-            false;
-
-        if (useMock) {
-          return <WifiAccessPoint>[
-            WifiAccessPoint(bssid: '00:11:22:33:44:55', rssi: -45),
-            WifiAccessPoint(bssid: '66:77:88:99:AA:BB', rssi: -60),
-            WifiAccessPoint(bssid: 'CC:DD:EE:FF:00:11', rssi: -70),
-          ];
-        }
-
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No Wi‑Fi access points were found.')),
+        );
         return <WifiAccessPoint>[];
       }
 
