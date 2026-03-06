@@ -31,19 +31,6 @@ namespace CleanArchitecture.Infrastructure.Migrations.Wifi
                 type: "int",
                 nullable: true);
 
-            migrationBuilder.AddColumn<bool>(
-                name: "IsWifiVerified",
-                table: "Attendances",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
-
-            migrationBuilder.AddColumn<double>(
-                name: "WifiConfidenceScore",
-                table: "Attendances",
-                type: "float",
-                nullable: true);
-
             migrationBuilder.CreateTable(
                 name: "Classrooms",
                 columns: table => new

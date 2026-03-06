@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using AutoMapper;
 using CleanArchitecture.Application.DTOs.Wifi;
 using CleanArchitecture.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +13,9 @@ namespace CleanArchitecture.WebApi.Controllers
         private readonly IStudentWifiScanService _scanService;
         private readonly IWifiTrainingSampleService _sampleService;
 
-        public WifiController(IStudentWifiScanService scanService, IWifiTrainingSampleService sampleService)
+        public WifiController(
+            IStudentWifiScanService scanService,
+            IWifiTrainingSampleService sampleService)
         {
             _scanService = scanService;
             _sampleService = sampleService;
@@ -24,8 +25,8 @@ namespace CleanArchitecture.WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> CreateScan([FromBody] StudentWifiScanCreateDto dto)
         {
-            var id = await _scanService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetScan), new { id }, null);
+            var result = await _scanService.CreateAsync(dto);
+            return Ok(result);
         }
 
         [HttpGet("scans/{id}")]

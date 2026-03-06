@@ -52,12 +52,14 @@ class _AttendedPageState extends State<AttendedPage> {
   void _onLectureTap(String lectureTitle, int lectureId) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => AttendedLecture(lectureTitle: lectureTitle),
-      ),
+     MaterialPageRoute(
+       builder: (context) => AttendedLecture(
+         lectureTitle: lectureTitle,
+         lectureId: lectureId,
+       ),
+     ),
     );
   }
-
   void _showSuccessDialog(BuildContext context, Response<dynamic> response) {
     showDialog(
       context: context,
@@ -363,6 +365,38 @@ class _AttendedPageState extends State<AttendedPage> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: 340,
+                            height: 70,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                               // Ders seçmeden WiFi olmaz, kullanıcıyı yönlendir
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("WiFi yoklaması için listeden bir ders seçin"),
+                                ),
+                               );
+                              },
+                            icon: const Icon(Icons.wifi, color: Colors.blue),
+                              label: const Text(
+                                "Attend using WiFi",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                             style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.blue),
+                              shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                             ),
                           ),
                         ],
