@@ -1,6 +1,6 @@
-// lib/services/wifi_service.dart
-
+import 'package:application/services/api_client.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wifi_scan/wifi_scan.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -8,149 +8,109 @@ class AttendanceResult {
   final bool success;
   final String message;
   final double confidence;
-  final String? attendanceId;
 
-  AttendanceResult({
-    required this.success,
-    required this.message,
-    this.confidence = 0.0,
-    this.attendanceId,
-  });
-}
-
-class ActiveSessionResult {
-  final bool active;
-  final String? sessionId;
-  final String? classroom;
-
-  ActiveSessionResult({
-    required this.active,
-    this.sessionId,
-    this.classroom,
-  });
+  AttendanceResult({required this.success, required this.message, this.confidence = 0.0});
 }
 
 class WifiService {
-  final Dio _dio;
+  final Dio _dio = ApiClient.instance.dio;
+  final _storage = const FlutterSecureStorage();
 
-  WifiService({required String baseUrl, required String token})
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: baseUrl,
-            headers: {'Authorization': 'Bearer $token'},
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-          ),
-        );
+  Future<String?> _getToken() => _storage.read(key: 'jwt');
 
-  /// Derse ait aktif WiFi session var mı kontrol et
-  Future<ActiveSessionResult> getActiveSession(String csLectureId) async {
-    try {
-      final response = await _dio.get('/wifi/sessions/active/$csLectureId');
-      final data = response.data;
-      return ActiveSessionResult(
-        active: data['active'] ?? false,
-        sessionId: data['session_id']?.toString(),
-        classroom: data['classroom'],
-      );
-    } on DioException catch (e) {
-      return ActiveSessionResult(active: false);
-    }
-  }
-
-  /// WiFi izinlerini iste
   Future<bool> requestPermissions() async {
     final location = await Permission.location.request();
     final nearbyWifi = await Permission.nearbyWifiDevices.request();
-    return location.isGranted &&
-        (nearbyWifi.isGranted || nearbyWifi.isLimited);
+    return location.isGranted && (nearbyWifi.isGranted || nearbyWifi.isLimited);
   }
 
-  /// WiFi ağlarını tara
   Future<List<WiFiAccessPoint>> scanWifi() async {
-    final canScan =
-        await WiFiScan.instance.canStartScan(askPermissions: true);
-    if (canScan != CanStartScan.yes) {
-      throw Exception('WiFi taraması yapılamıyor: $canScan');
-    }
-
+    final canScan = await WiFiScan.instance.canStartScan(askPermissions: true);
+    if (canScan != CanStartScan.yes) throw Exception('WiFi taraması yapılamıyor: $canScan');
     await WiFiScan.instance.startScan();
     await Future.delayed(const Duration(seconds: 2));
-
-    final canGet = await WiFiScan.instance
-        .canGetScannedResults(askPermissions: true);
-    if (canGet != CanGetScannedResults.yes) {
-      throw Exception('WiFi sonuçları alınamıyor: $canGet');
-    }
-
+    final canGet = await WiFiScan.instance.canGetScannedResults(askPermissions: true);
+    if (canGet != CanGetScannedResults.yes) throw Exception('WiFi sonuçları alınamıyor');
     return await WiFiScan.instance.getScannedResults();
   }
 
-  /// WiFi taraması yapıp yoklama al
-  Future<AttendanceResult> checkIn({
-    required String sessionId,
-    required String deviceInfo,
-  }) async {
-    // 1. İzinleri kontrol et
-    final hasPermission = await requestPermissions();
-    if (!hasPermission) {
-      return AttendanceResult(
-        success: false,
-        message: 'WiFi taraması için konum izni gerekli',
+  /// Öğrencinin derslerini al, aktif session olan ilkini bul
+  Future<int?> findActiveSessionId() async {
+    try {
+      final token = await _getToken();
+
+      // 1. Öğrencinin derslerini al
+      final coursesResp = await _dio.get(
+        '/api/v1/Course/get-for-current-user',
+        queryParameters: {'pageNumber': 1, 'pageSize': 100},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
+
+      final listJson = coursesResp.data['data']['data'] as List;
+      final courseIds = listJson.map((e) => e['id'] as int).toList();
+
+      // 2. Her ders için aktif session var mı kontrol et
+      for (final courseId in courseIds) {
+        final resp = await _dio.get(
+          '/api/sessions/active-by-course/$courseId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+        final sessionId = resp.data['data'] as int?;
+        if (sessionId != null) return sessionId;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<AttendanceResult> checkIn() async {
+    // 1. Aktif session bul
+    final sessionId = await findActiveSessionId();
+    if (sessionId == null) {
+      return AttendanceResult(success: false, message: 'Şu an aktif bir dersiniz bulunamadı');
     }
 
-    // 2. WiFi tara
+    // 2. İzin kontrolü
+    final hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      return AttendanceResult(success: false, message: 'Konum izni gerekli');
+    }
+
+    // 3. WiFi tara
     final List<WiFiAccessPoint> aps;
     try {
       aps = await scanWifi();
     } catch (e) {
-      return AttendanceResult(
-        success: false,
-        message: 'WiFi taraması başarısız: $e',
-      );
+      return AttendanceResult(success: false, message: 'WiFi taraması başarısız: $e');
     }
 
     if (aps.isEmpty) {
-      return AttendanceResult(
-        success: false,
-        message: 'Hiç WiFi ağı bulunamadı',
-      );
+      return AttendanceResult(success: false, message: 'Hiç WiFi ağı bulunamadı');
     }
 
-    // 3. FastAPI'ye gönder
+    // 4. C# backend'e gönder
     try {
-      final response = await _dio.post(
-        '/wifi/attendance/check-in',
+      final token = await _getToken();
+      await _dio.post(
+        '/api/Wifi/scans',
         data: {
-          'session_id': sessionId,
-          'device_info': deviceInfo,
-          'client_timestamp': DateTime.now().toUtc().toIso8601String(),
-          'access_points': aps
+          'studentId': null,
+          'sessionId': sessionId,
+          'scannedAtUtc': DateTime.now().toUtc().toIso8601String(),
+          'accessPoints': aps
               .where((ap) => ap.level != 0)
-              .map((ap) => {
-                    'bssid': ap.bssid,
-                    'ssid': ap.ssid,
-                    'rssi': ap.level,
-                    'frequency': ap.frequency,
-                  })
+              .take(20)
+              .map((ap) => {'bssid': ap.bssid, 'rssi': ap.level})
               .toList(),
         },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      final data = response.data;
-      return AttendanceResult(
-        success: data['success'] ?? false,
-        message: data['message'] ?? '',
-        confidence: (data['confidence'] ?? 0.0).toDouble(),
-        attendanceId: data['attendance_id']?.toString(),
-      );
+      return AttendanceResult(success: true, message: 'Yoklama alındı ✓');
     } on DioException catch (e) {
-      final detail = e.response?.data?['detail'] ?? e.message;
-      return AttendanceResult(
-        success: false,
-        message: detail.toString(),
-      );
+      final detail = e.response?.data?['errors']?.first ?? e.message;
+      return AttendanceResult(success: false, message: detail.toString());
     }
   }
 }
