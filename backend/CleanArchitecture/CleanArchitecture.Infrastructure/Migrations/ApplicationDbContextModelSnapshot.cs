@@ -58,7 +58,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("RefreshToken", (string)null);
+                    b.ToTable("RefreshToken");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.ApplicationUser", b =>
@@ -148,14 +148,51 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("StudentId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("IsWifiVerified")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("MarkedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<double?>("WifiConfidenceScore")
+                        .HasColumnType("float");
 
                     b.HasKey("SessionId", "StudentId");
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Attendances", (string)null);
+                    b.ToTable("Attendances");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Classroom", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Building")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Classrooms");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Courses.Course", b =>
@@ -165,6 +202,9 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ClassroomId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
@@ -201,13 +241,15 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClassroomId");
+
                     b.HasIndex("DepartmantId");
 
                     b.HasIndex("LectureId");
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Courses.CourseStaff", b =>
@@ -222,7 +264,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.HasIndex("StaffId");
 
-                    b.ToTable("CourseStaffs", (string)null);
+                    b.ToTable("CourseStaffs");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Courses.CourseStudent", b =>
@@ -237,7 +279,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("CourseStudents", (string)null);
+                    b.ToTable("CourseStudents");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Departmants.Departmant", b =>
@@ -273,7 +315,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.HasIndex("FacultyId");
 
-                    b.ToTable("Departmants", (string)null);
+                    b.ToTable("Departmants");
 
                     b.HasData(
                         new
@@ -314,7 +356,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties", (string)null);
+                    b.ToTable("Faculties");
 
                     b.HasData(
                         new
@@ -361,7 +403,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[Code] IS NOT NULL");
 
-                    b.ToTable("Lectures", (string)null);
+                    b.ToTable("Lectures");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Sessions.Session", b =>
@@ -393,6 +435,9 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double>("MinimumConfidence")
+                        .HasColumnType("float");
+
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
@@ -402,11 +447,163 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("Token")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("WifiVerificationRequired")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Sessions", (string)null);
+                    b.ToTable("Sessions");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.StudentWifiAccessPoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Bssid")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Rssi")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentWifiScanId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentWifiScanId");
+
+                    b.ToTable("StudentWifiAccessPoints");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.StudentWifiScan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double?>("ConfidenceScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PredictedClassroomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ScannedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StudentId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentWifiScans");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.WifiTrainingAccessPoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Bssid")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Rssi")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WifiTrainingSampleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WifiTrainingSampleId");
+
+                    b.ToTable("WifiTrainingAccessPoints");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.WifiTrainingSample", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClassroomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CollectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.ToTable("WifiTrainingSamples");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -580,6 +777,11 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Courses.Course", b =>
                 {
+                    b.HasOne("CleanArchitecture.Core.Entities.Classroom", "Classroom")
+                        .WithMany("Courses")
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("CleanArchitecture.Core.Entities.Departmants.Departmant", "Departmant")
                         .WithMany()
                         .HasForeignKey("DepartmantId")
@@ -596,6 +798,8 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("TeacherId")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Classroom");
 
                     b.Navigation("Departmant");
 
@@ -660,6 +864,57 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Navigation("Course");
                 });
 
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.StudentWifiAccessPoint", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Wifi.StudentWifiScan", "Scan")
+                        .WithMany("AccessPoints")
+                        .HasForeignKey("StudentWifiScanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Scan");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.StudentWifiScan", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Sessions.Session", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CleanArchitecture.Core.Entities.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Session");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.WifiTrainingAccessPoint", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Wifi.WifiTrainingSample", "Sample")
+                        .WithMany("AccessPoints")
+                        .HasForeignKey("WifiTrainingSampleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sample");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.WifiTrainingSample", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Classroom", "Classroom")
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -716,6 +971,11 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Navigation("RefreshTokens");
                 });
 
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Classroom", b =>
+                {
+                    b.Navigation("Courses");
+                });
+
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Courses.Course", b =>
                 {
                     b.Navigation("CourseStaffs");
@@ -726,6 +986,16 @@ namespace CleanArchitecture.Infrastructure.Migrations
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Sessions.Session", b =>
                 {
                     b.Navigation("Attendances");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.StudentWifiScan", b =>
+                {
+                    b.Navigation("AccessPoints");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Wifi.WifiTrainingSample", b =>
+                {
+                    b.Navigation("AccessPoints");
                 });
 #pragma warning restore 612, 618
         }

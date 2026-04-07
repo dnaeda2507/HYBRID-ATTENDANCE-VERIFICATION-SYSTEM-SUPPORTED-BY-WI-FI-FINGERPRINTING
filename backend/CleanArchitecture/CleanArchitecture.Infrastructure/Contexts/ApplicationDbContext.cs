@@ -13,6 +13,7 @@ using CleanArchitecture.Infrastructure.Seeds.Configurations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using CleanArchitecture.Core.Entities.Wifi;
 
 namespace CleanArchitecture.Infrastructure.Contexts
 {
@@ -30,6 +31,13 @@ namespace CleanArchitecture.Infrastructure.Contexts
         public DbSet<Session> Sessions { get; set; }
         public DbSet<Lecture> Lectures { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+
+        // Wifi related DbSets
+        public DbSet<StudentWifiScan> StudentWifiScans { get; set; }
+        public DbSet<WifiTrainingSample> WifiTrainingSamples { get; set; }
+        public DbSet<StudentWifiAccessPoint> StudentWifiAccessPoints { get; set; }
+        public DbSet<WifiTrainingAccessPoint> WifiTrainingAccessPoints { get; set; }
+        public DbSet<Classroom> Classrooms { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDateTimeService dateTime, IAuthenticatedUserService authenticatedUser) : base(options)
         {
@@ -160,7 +168,12 @@ namespace CleanArchitecture.Infrastructure.Contexts
                     .WithMany()
                     .HasForeignKey(e => e.TeacherId)
                     .OnDelete(DeleteBehavior.NoAction);
-
+                // -------------------------
+                entity.HasOne(e => e.Classroom)
+                    .WithMany(c => c.Courses)
+                    .HasForeignKey(e => e.ClassroomId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                // -------------------------
                 entity.HasMany(e => e.CourseStaffs)
                     .WithOne()
                     .HasForeignKey(e => e.CourseId)
@@ -212,6 +225,38 @@ namespace CleanArchitecture.Infrastructure.Contexts
                 entity.HasIndex(e => e.Code)
                     .IsUnique();
             });
+            // -------------------------
+
+            builder.Entity<StudentWifiScan>()
+                .HasMany(s => s.AccessPoints)
+                .WithOne(a => a.Scan)
+                .HasForeignKey(a => a.StudentWifiScanId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StudentWifiScan>()
+                .HasOne(s => s.Session)
+                .WithMany()
+                .HasForeignKey(s => s.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StudentWifiScan>()
+                .HasOne(s => s.Student)
+                .WithMany()
+                .HasForeignKey(s => s.StudentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<WifiTrainingSample>()
+                .HasMany(s => s.AccessPoints)
+                .WithOne(a => a.Sample)
+                .HasForeignKey(a => a.WifiTrainingSampleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<WifiTrainingSample>()
+                .HasOne(s => s.Classroom)
+                .WithMany()
+                .HasForeignKey(s => s.ClassroomId)
+                .OnDelete(DeleteBehavior.NoAction);
+
         }
 
         private void ConfigureSeeds(ModelBuilder builder)

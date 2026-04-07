@@ -23,6 +23,12 @@ namespace CleanArchitecture.Core.Entities.Courses
         public List<CourseStaff> CourseStaffs { get; set; } = new List<CourseStaff>();
         public List<CourseStudent> CourseStudents { get; set; } = new List<CourseStudent>();
 
+
+          // Backend ML için relational classroom
+        public int? ClassroomId { get; set; }
+        public Classroom Classroom { get; set; }
+
+
         public Course()
         {
         }

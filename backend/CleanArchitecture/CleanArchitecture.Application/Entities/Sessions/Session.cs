@@ -17,6 +17,9 @@ namespace CleanArchitecture.Core.Entities.Sessions
         public SessionStatus Status { get; set; } = SessionStatus.Open;
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
+         public double MinimumConfidence { get; set; } = 0.8;
+        public bool WifiVerificationRequired { get; set; } = true;
+
         public bool IsOpen()
         {
             var now = DateTime.Now;

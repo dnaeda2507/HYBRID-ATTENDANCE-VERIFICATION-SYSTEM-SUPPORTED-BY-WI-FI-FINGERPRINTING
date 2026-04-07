@@ -7,9 +7,11 @@ using CleanArchitecture.Application.Features.Attendances.Queries;
 using CleanArchitecture.Core.Enums;
 using CleanArchitecture.Core.Filters;
 using CleanArchitecture.Core.Wrappers;
+using CleanArchitecture.Infrastructure.Contexts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitecture.WebApi.Controllers.v1
 {
@@ -18,11 +20,14 @@ namespace CleanArchitecture.WebApi.Controllers.v1
     public class SessionsController : BaseApiController
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDbContext _db;
 
-        public SessionsController(IHttpContextAccessor httpContextAccessor)
+        public SessionsController(IHttpContextAccessor httpContextAccessor, ApplicationDbContext db)
         {
             _httpContextAccessor = httpContextAccessor;
+            _db = db;
         }
+
         private string UserId => _httpContextAccessor.HttpContext?.User?.Claims
             .FirstOrDefault(c => c.Type == "uid")?.Value;
 
@@ -44,7 +49,7 @@ namespace CleanArchitecture.WebApi.Controllers.v1
         }
 
         [HttpPost("attend")]
-        [Authorize(Roles = nameof(Roles.Student))]
+        [Authorize(Roles = "Student")]
         public async Task<ActionResult<ApiResponse<bool>>> Attend([FromBody] MarkAttendanceCommand command)
         {
             await Mediator.Send(command);
@@ -73,6 +78,38 @@ namespace CleanArchitecture.WebApi.Controllers.v1
                 Predicate = x => x.SessionId == sessionId
             });
             return Ok(ApiResponse<List<AttendedUserDTO>>.Ok(result));
+        }
+
+        [HttpGet("active-by-course/{courseId}")]
+        [Authorize(Roles = "Student")]
+        public async Task<ActionResult<ApiResponse<int?>>> GetActiveSessionByCourse(int courseId)
+        {
+            var session = await _db.Sessions
+                .Where(s => s.CourseId == courseId && s.Status == 0)
+                .OrderByDescending(s => s.Created)
+                .FirstOrDefaultAsync();
+
+            if (session == null)
+                return Ok(ApiResponse<int?>.Ok(null, "No active session"));
+
+            return Ok(ApiResponse<int?>.Ok(session.Id, "Active session found"));
+        }
+
+        [HttpGet("my-active-session")]
+        [Authorize(Roles = "Student")]
+        public async Task<ActionResult<ApiResponse<int?>>> GetMyActiveSession()
+        {
+            var sessionId = await _db.Sessions
+                .Where(s => s.Status == 0 &&
+                       s.Course.CourseStudents.Any(cs => cs.StudentId == UserId))
+                .OrderByDescending(s => s.Created)
+                .Select(s => (int?)s.Id)
+                .FirstOrDefaultAsync();
+
+            if (sessionId == null)
+                return Ok(ApiResponse<int?>.Ok(null, "No active session"));
+
+            return Ok(ApiResponse<int?>.Ok(sessionId, "Active session found"));
         }
     }
 }

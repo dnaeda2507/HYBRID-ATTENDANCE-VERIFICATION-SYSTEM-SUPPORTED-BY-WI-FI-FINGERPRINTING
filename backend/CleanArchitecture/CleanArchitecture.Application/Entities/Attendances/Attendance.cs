@@ -10,5 +10,9 @@ namespace CleanArchitecture.Core.Entities.Attendances
         public string StudentId { get; set; }
         public ApplicationUser Student { get; set; }
         public DateTime MarkedAtUtc { get; set; }
+
+        public double? WifiConfidenceScore { get; set; }
+        public bool IsWifiVerified { get; set; }
+
     }
 }
