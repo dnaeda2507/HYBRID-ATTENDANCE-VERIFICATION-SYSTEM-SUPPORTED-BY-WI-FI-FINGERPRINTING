@@ -9,9 +9,10 @@ from app.models.wifi_models import (
     StudentWifiAccessPoint,
 )
 from app.schemas.schemas import StudentScanCreate, AttendanceCheckInResponse
+from app.core.database import settings
 
 TIMESTAMP_TOLERANCE_SECONDS = 300
-CS_BACKEND_URL = "https://localhost:9001"
+CS_BACKEND_URL = getattr(settings, "CS_BACKEND_URL", "http://backend:80")
 
 
 def save_scan_to_cs(

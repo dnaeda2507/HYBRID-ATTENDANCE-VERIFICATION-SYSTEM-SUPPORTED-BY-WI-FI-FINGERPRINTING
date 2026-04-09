@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import httpx
 
-from app.core.database import get_db
+from app.core.database import get_db, settings
 from app.core.security import get_current_user
 from app.schemas.schemas import Token, UserOut
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-CS_BACKEND_URL = "https://localhost:9001"
+CS_BACKEND_URL = getattr(settings, "CS_BACKEND_URL", "http://backend:80")
 
 
 @router.post("/login", response_model=Token)

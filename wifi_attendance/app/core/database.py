@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-this-in-production"
     ALGORITHM: str = "HS256"
     INTERNAL_TOKEN: str = "wifi-ml-internal-secret-2024"
-    INTERNAL_TOKEN: str = "wifi-ml-internal-secret-2024"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 3600
+    CS_BACKEND_URL: str = "http://backend:80"
 
     class Config:
         env_file = ".env"
