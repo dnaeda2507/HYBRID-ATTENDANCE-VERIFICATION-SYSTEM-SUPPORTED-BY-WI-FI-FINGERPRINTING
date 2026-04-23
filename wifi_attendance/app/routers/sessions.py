@@ -8,10 +8,11 @@ import httpx
 from app.core.database import get_db
 from app.core.security import require_role
 from app.models.wifi_models import WifiSession, Classroom
+from app.core.database import settings
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
-CS_BACKEND_URL = "https://localhost:9001"
+CS_BACKEND_URL = getattr(settings, "CS_BACKEND_URL", "http://backend:80")
 
 
 class StartSessionRequest(BaseModel):

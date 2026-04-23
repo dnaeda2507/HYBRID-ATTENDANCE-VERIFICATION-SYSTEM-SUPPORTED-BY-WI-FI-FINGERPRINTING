@@ -1,6 +1,8 @@
 import 'package:application/components/theme_provider.dart';
 import 'package:application/screens/settings/account.dart';
 import 'package:application/services/change_passwords_service.dart';
+import 'package:application/services/server_config.dart';
+import 'package:application/services/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -100,6 +102,13 @@ class _SettingsPageState extends State<SettingsPage> {
             leading: const Icon(Icons.lock),
             title: const Text('Change Password'),
             onTap: () => _showChangePasswordDialog(context),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.dns),
+            title: const Text('Server Address'),
+            subtitle: Text(ServerConfig.baseUrl),
+            onTap: () => _showServerUrlDialog(context),
           ),
         ],
       ),
@@ -282,6 +291,47 @@ void _showChangePasswordDialog(BuildContext context) {
   );
 }
 
+void _showServerUrlDialog(BuildContext context) {
+  final controller = TextEditingController(text: ServerConfig.baseUrl);
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Server Address'),
+      content: TextField(
+        controller: controller,
+        keyboardType: TextInputType.url,
+        decoration: const InputDecoration(
+          labelText: 'Base URL',
+          hintText: 'http://34.90.123.45:9001',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final url = controller.text.trim();
+            if (url.isNotEmpty) {
+              await ServerConfig.setBaseUrl(url);
+              ApiClient.instance.reload();
+              if (context.mounted) {
+                Navigator.pop(context);
+                setState(() {}); // subtitle'ı güncelle
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Server address updated: $url')),
+                );
+              }
+            }
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   void dispose() {

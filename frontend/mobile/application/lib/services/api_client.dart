@@ -1,25 +1,25 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Platform;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'server_config.dart';
 
 class ApiClient {
-  static final ApiClient instance = ApiClient._();
+  static final ApiClient _instance = ApiClient._();
+  static ApiClient get instance => _instance;
 
-  late final Dio dio;
+  late Dio dio;
   final _storage = FlutterSecureStorage();
 
   ApiClient._() {
-    final host =
-        kIsWeb
-            ? 'localhost'
-            : Platform.isAndroid
-            ? '10.0.2.2'
-            : '127.0.0.1';
+    _buildDio();
+  }
 
-    dio = Dio(BaseOptions(baseUrl: 'https://$host:9001'))
+  void _buildDio() {
+    dio = Dio(BaseOptions(baseUrl: ServerConfig.baseUrl))
       ..interceptors.add(_authInterceptor());
   }
+
+  /// Call this after changing the server URL in settings.
+  void reload() => _buildDio();
 
   // Save user ID to secure storage
   Future<void> saveUserId(String userId) async {

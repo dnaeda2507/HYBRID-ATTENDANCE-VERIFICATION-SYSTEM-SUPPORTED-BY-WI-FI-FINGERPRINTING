@@ -66,25 +66,30 @@ Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(app.Configuration)
                 .CreateLogger();
 
-//Seed Default Data
+//Seed Default Data & Apply Migrations
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var loggerFactory = services.GetRequiredService<ILoggerFactory>();
     try
     {
+        // 1. Veritabanı tablolarını oluştur/güncelle (Migrate)
+        var dbContext = services.GetRequiredService<CleanArchitecture.Infrastructure.Contexts.ApplicationDbContext>();
+        await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.MigrateAsync(dbContext.Database);
+
+        // 2. Default verileri tohumla (Seed)
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
         await CleanArchitecture.Infrastructure.Seeds.DefaultRoles.SeedAsync(userManager, roleManager);
         await CleanArchitecture.Infrastructure.Seeds.DefaultItStaff.SeedAsync(userManager, roleManager);
         await CleanArchitecture.Infrastructure.Seeds.DefaultStudent.SeedAsync(userManager, roleManager);
-        Log.Information("Finished Seeding Default Data");
+        Log.Information("Finished Seeding Default Data & Migrations");
         Log.Information("Application Starting");
     }
     catch (Exception ex)
     {
-        Log.Warning(ex, "An error occurred seeding the DB");
+        Log.Warning(ex, "An error occurred seeding the DB or applying migrations");
     }
     finally
     {

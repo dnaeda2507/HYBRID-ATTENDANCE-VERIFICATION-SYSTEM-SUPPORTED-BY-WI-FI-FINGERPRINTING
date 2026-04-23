@@ -1,9 +1,8 @@
-.env
-.env.*
 venv/
 __pycache__/
 *.pyc
-*.pkl
 *.joblib
-models/
+*.pkl
 *.db
+.env
+.gitignore

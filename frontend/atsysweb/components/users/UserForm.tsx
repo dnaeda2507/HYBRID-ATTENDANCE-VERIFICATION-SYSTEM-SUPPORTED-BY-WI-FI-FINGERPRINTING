@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Fragment } from "react";
+import React, { useEffect, useMemo, useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import {
   atsysApi,
@@ -35,22 +35,19 @@ export function UserForm({ userId }: { userId?: string }) {
   });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const rolesEnum = [
-    "It Staff",
-    "Teacher",
-    "Academic Staff",
-    "Student",
-  ] as const;
-  const roleOptions: RoleOption[] = rolesEnum.map((name, i) => ({
-    id: i as Roles,
-    name,
-  }));
+  const roleOptions: RoleOption[] = useMemo(
+    () =>
+      (["It Staff", "Teacher", "Academic Staff", "Student"] as const).map(
+        (name, i) => ({ id: i as Roles, name })
+      ),
+    []
+  );
 
   const [query, setQuery] = useState("");
   const filteredOptions = query
     ? roleOptions.filter((o) =>
-        o.name.toLowerCase().includes(query.toLowerCase())
-      )
+      o.name.toLowerCase().includes(query.toLowerCase())
+    )
     : roleOptions;
 
   const [selectedRoles, setSelectedRoles] = useState<RoleOption[]>([]);
@@ -94,7 +91,7 @@ export function UserForm({ userId }: { userId?: string }) {
         },
       }
     );
-  }, [userId, fetchById]);
+  }, [userId, fetchById, roleOptions]);
 
   useEffect(() => {
     setUser((u) => ({ ...u, roles: selectedRoles.map((r) => r.id) }));
