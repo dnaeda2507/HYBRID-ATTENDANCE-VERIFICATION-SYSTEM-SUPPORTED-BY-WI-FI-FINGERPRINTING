@@ -60,7 +60,8 @@ namespace CleanArchitecture.Application.Features.Users.Commands.CreateUser
                     }
                     else
                     {
-                        throw new ApiException($"{result.Errors.FirstOrDefault()?.ToString()}");
+                        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                        throw new ApiException($"Failed to create user: {errors}");
                     }
                 }
                 else
