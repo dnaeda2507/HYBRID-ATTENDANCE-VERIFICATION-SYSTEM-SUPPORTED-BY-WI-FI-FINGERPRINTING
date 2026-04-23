@@ -12,9 +12,12 @@ RUN npm install -g pnpm
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_API_URL is baked in at build time
+# NEXT_PUBLIC vars are baked in at build time
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+ARG NEXT_PUBLIC_API_VERSION=1.0
+ENV NEXT_PUBLIC_API_VERSION=$NEXT_PUBLIC_API_VERSION
 
 RUN pnpm build
 
