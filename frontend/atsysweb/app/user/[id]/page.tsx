@@ -1,10 +1,10 @@
 import { UserForm } from "@/components/users/UserForm";
-import React from "react";
 
-interface Props {
-  params: { id: string };
+interface PageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default function EditUserPage({ params: { id } }: Props) {
+export default async function Page({ params }: PageProps) {
+  const { id } = await params;
   return <UserForm userId={id} />;
 }

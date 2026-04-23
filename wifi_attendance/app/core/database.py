@@ -5,7 +5,7 @@ from app.models.models import Base
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "mssql+pymssql://sa:Test_Password@localhost:1433/CSEProjectTest"
+    DATABASE_URL: str = "mssql+pymssql://sqlserver:Attendance2026!@136.112.84.168:1433/CSEProjectTest"
     SECRET_KEY: str = "change-this-in-production"
     ALGORITHM: str = "HS256"
     INTERNAL_TOKEN: str = "wifi-ml-internal-secret-2024"
