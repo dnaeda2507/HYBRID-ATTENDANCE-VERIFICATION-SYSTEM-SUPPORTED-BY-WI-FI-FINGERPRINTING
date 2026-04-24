@@ -31,6 +31,13 @@ builder.Services.AddControllers();
 builder.Services.AddApiVersioningExtension();
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+// ── YENİ: FastAPI HTTP client ──────────────────────────────────────────────
+builder.Services.AddHttpClient("FastAPI", c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["FastAPI:BaseUrl"]
+        ?? "http://localhost:8000");
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
 
 //Build the application
 var app = builder.Build();
