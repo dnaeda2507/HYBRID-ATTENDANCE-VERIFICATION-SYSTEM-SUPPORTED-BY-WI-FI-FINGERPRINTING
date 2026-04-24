@@ -486,5 +486,5 @@ $RECYCLE.BIN/
 
 # App settings dev
 appsettings.Development.json
-
+.DS_Store
 *.WebApi.xml
