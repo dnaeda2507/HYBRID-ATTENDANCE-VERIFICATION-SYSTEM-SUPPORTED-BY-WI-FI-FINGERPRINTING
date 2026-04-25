@@ -16,30 +16,32 @@ const Sidebar = () => {
   const pathname = usePathname();
   const userRoles = useAppSelector((state) => state.auth.roles) ?? [];
 
+  const normalizeRole = (role: string) => role.replace(/\s+/g, "").toLowerCase();
+
   const menuItems: MenuItem[] = [
     { title: "Home", path: "/" },
-    { title: "Users", path: "/users", roles: ["ItStaff"] },
+    { title: "Users", path: "/users", roles: ["ItStaff", "It Staff"] },
     {
       title: "Lectures",
       path: "/lectures",
-      roles: ["ItStaff", "Teacher", "AcademicStaff"],
+      roles: ["ItStaff", "It Staff", "Teacher", "AcademicStaff", "Academic Staff"],
     },
     {
       title: "Courses",
       path: "/courses",
-      roles: ["ItStaff", "Teacher", "AcademicStaff"],
+      roles: ["ItStaff", "It Staff", "Teacher", "AcademicStaff", "Academic Staff"],
     },
     {
       title: "Attendance",
       path: "/attendance",
-      roles: ["Teacher", "Academic Staff"],
     },
     { title: "Settings", path: "/settings" },
   ];
 
   const filteredItems = menuItems.filter((item) => {
     if (!item.roles) return true;
-    return item.roles.some((r) => userRoles.includes(r));
+    const normalizedUserRoles = userRoles.map(normalizeRole);
+    return item.roles.some((r) => normalizedUserRoles.includes(normalizeRole(r)));
   });
 
   return (
