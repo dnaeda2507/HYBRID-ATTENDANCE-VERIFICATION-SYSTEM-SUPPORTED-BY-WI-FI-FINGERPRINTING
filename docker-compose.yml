@@ -18,7 +18,7 @@ services:
       - -c
       - |
         chown -R 10001:0 /var/opt/mssql
-        exec gosu mssql /opt/mssql/bin/sqlservr
+        exec su mssql -s /bin/bash -c "/opt/mssql/bin/sqlservr"
     healthcheck:
       test: >
         /opt/mssql-tools18/bin/sqlcmd
