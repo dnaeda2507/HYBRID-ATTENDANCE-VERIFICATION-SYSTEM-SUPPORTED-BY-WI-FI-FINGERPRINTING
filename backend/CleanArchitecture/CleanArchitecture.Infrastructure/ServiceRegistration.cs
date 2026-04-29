@@ -115,6 +115,8 @@ namespace CleanArchitecture.Infrastructure
 
             services.AddTransient<IStudentWifiScanService, StudentWifiScanService>();
             services.AddTransient<IWifiTrainingSampleService, WifiTrainingSampleService>();
+            services.AddTransient<IRiskScoreService, RiskScoreService>();
+            services.AddTransient<ISecurityEventService, SecurityEventService>();
             services.AddHttpClient<IFastApiService, FastApiService>();
 
         }

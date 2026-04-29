@@ -13,11 +13,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitecture.Application.Features.Attendances.Commands
 {
-    // ── Mevcut command (değişmedi) ──────────────────────────────────────────
+    // Attendance methods enum
+    public enum AttendanceMethod
+    {
+        QRCode = 0,      // Token ile
+        Password = 1,    // Şifre ile (aynı Token)
+        Wifi = 2         // WiFi ile
+    }
+
+    // ── Unified command for all attendance methods ──────────────────────────
     public partial class MarkAttendanceCommand : IRequest<Unit>
     {
         public int SessionId { get; set; }
-        public string Token { get; set; }
+        public string Token { get; set; }    // QR/Password için
+        public AttendanceMethod Method { get; set; } = AttendanceMethod.QRCode;
     }
 
     public class MarkAttendanceCommandHandler : IRequestHandler<MarkAttendanceCommand, Unit>
@@ -39,27 +48,36 @@ namespace CleanArchitecture.Application.Features.Attendances.Commands
         public async Task<Unit> Handle(MarkAttendanceCommand request, CancellationToken ct)
         {
             var session = await _sessionRepo
-                .GetQueryableAsync(nameof(Session.Attendances))
+                .GetQueryableAsync()
                 .Include(s => s.Course)
                     .ThenInclude(c => c.CourseStudents)
                 .FirstOrDefaultAsync(s => s.Id == request.SessionId, ct);
 
             if (session is null)
                 throw new ArgumentNullException($"Session {request.SessionId} not found.");
-            if (!string.Equals(session.Token, request.Token, StringComparison.Ordinal))
-                throw new ArgumentException("Invalid attendance code.");
+            
+            // QR Code veya Şifre ile
+            if (request.Method == AttendanceMethod.QRCode || request.Method == AttendanceMethod.Password)
+            {
+                if (!string.Equals(session.Token, request.Token, StringComparison.Ordinal))
+                    throw new ArgumentException("Invalid attendance code.");
+            }
+            
             if (session.Status != SessionStatus.Open)
                 throw new ArgumentException("Attendance session is not open.");
-
-            var nowUtc = DateTime.Now;
             if (session.IsOpen() == false)
                 throw new ArgumentException("Not within attendance time window.");
 
             var studentId = _currentUser.UserId
                             ?? throw new UnauthorizedAccessException("Unauthenticated");
 
-            if (session.Attendances.Any(a => a.StudentId == studentId))
+            // Zaten yoklama almış mı kontrol et
+            var alreadyAttended = await _attendanceRepo
+                .GetQueryableAsync()
+                .AnyAsync(a => a.SessionId == session.Id && a.StudentId == studentId, ct);
+            if (alreadyAttended)
                 throw new ArgumentException("You have already marked attendance.");
+            
             if (!session.Course.CourseStudents.Any(s => s.StudentId == studentId))
                 throw new ArgumentException("You are not enrolled in this course.");
 
@@ -67,67 +85,8 @@ namespace CleanArchitecture.Application.Features.Attendances.Commands
             {
                 SessionId = session.Id,
                 StudentId = studentId,
-                MarkedAtUtc = nowUtc
-            });
-
-            return Unit.Value;
-        }
-    }
-
-    // ── YENİ: WiFi üzerinden öğrenci başlatır, token yerine konum doğrular ─
-    public class MarkAttendanceByWifiCommand : IRequest<Unit>
-    {
-        public int SessionId { get; set; }
-        // StudentId JWT'den otomatik gelir, dışarıdan set edilmez
-    }
-
-    public class MarkAttendanceByWifiCommandHandler : IRequestHandler<MarkAttendanceByWifiCommand, Unit>
-    {
-        private readonly ISessionRepositoryAsync _sessionRepo;
-        private readonly IAttendanceRepositoryAsync _attendanceRepo;
-        private readonly IAuthenticatedUserService _currentUser;
-
-        public MarkAttendanceByWifiCommandHandler(
-            ISessionRepositoryAsync sessionRepo,
-            IAttendanceRepositoryAsync attendanceRepo,
-            IAuthenticatedUserService currentUser)
-        {
-            _sessionRepo = sessionRepo;
-            _attendanceRepo = attendanceRepo;
-            _currentUser = currentUser;
-        }
-
-        public async Task<Unit> Handle(MarkAttendanceByWifiCommand request, CancellationToken ct)
-        {
-            var session = await _sessionRepo
-                .GetQueryableAsync(nameof(Session.Attendances))
-                .Include(s => s.Course)
-                    .ThenInclude(c => c.CourseStudents)
-                .FirstOrDefaultAsync(s => s.Id == request.SessionId, ct);
-
-            if (session is null)
-                throw new ArgumentNullException($"Session {request.SessionId} not found.");
-            if (session.Status != SessionStatus.Open)
-                throw new ArgumentException("Attendance session is not open.");
-            if (!session.IsOpen())
-                throw new ArgumentException("Not within attendance time window.");
-
-            var studentId = _currentUser.UserId
-                            ?? throw new UnauthorizedAccessException("Unauthenticated");
-
-            // Zaten kayıtlıysa sessizce geç
-            if (session.Attendances.Any(a => a.StudentId == studentId))
-                return Unit.Value;
-
-            if (!session.Course.CourseStudents.Any(s => s.StudentId == studentId))
-                throw new ArgumentException("Student is not enrolled in this course.");
-
-            await _attendanceRepo.AddAsync(new Attendance
-            {
-                SessionId = session.Id,
-                StudentId = studentId,
                 MarkedAtUtc = DateTime.UtcNow,
-                IsWifiVerified = true,
+                IsWifiVerified = (request.Method == AttendanceMethod.Wifi)
             });
 
             return Unit.Value;

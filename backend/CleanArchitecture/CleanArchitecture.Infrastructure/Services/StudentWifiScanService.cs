@@ -62,9 +62,10 @@ namespace CleanArchitecture.Infrastructure.Services
                         "WiFi tahmin başarılı: {Classroom} ({Confidence:P0}). Yoklama kaydediliyor. Student={StudentId}, Session={SessionId}",
                         prediction.ClassroomName, prediction.Confidence, _currentUser.UserId, dto.SessionId);
 
-                    await _mediator.Send(new MarkAttendanceByWifiCommand
+                    await _mediator.Send(new MarkAttendanceCommand
                     {
                         SessionId = dto.SessionId,
+                        Method = (AttendanceMethod)2  // WiFi = 2
                     });
                 }
                 else

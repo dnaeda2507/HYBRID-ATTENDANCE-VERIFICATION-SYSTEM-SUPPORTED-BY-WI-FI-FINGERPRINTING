@@ -38,7 +38,6 @@ namespace CleanArchitecture.Application.Features.Attendances.Queries
             {
                 var query = _attendanceRepository
                     .GetQueryableAsync()
-                    .Include(a => a.Student)
                     .Include(a => a.Session)
                         .ThenInclude(s => s.Course)
                             .ThenInclude(c => c.Lecture)
@@ -60,7 +59,14 @@ namespace CleanArchitecture.Application.Features.Attendances.Queries
                     return new PagedResponse<AttendanceListingDTO>(new List<AttendanceListingDTO>(), request.PageNumber, request.PageSize, totalRecords);
                 }
 
-                var attendanceDTOs = _mapper.Map<List<AttendanceListingDTO>>(attendances);
+                // Manuel mapping yapalım
+                var attendanceDTOs = attendances
+                    .Select(a => new AttendanceListingDTO
+                    {
+                        CourseName = a.Session?.Course?.Lecture?.Name ?? "Bilinmeyen Ders",
+                        MarkedAtUtc = a.MarkedAtUtc
+                    })
+                    .ToList();
 
                 return new PagedResponse<AttendanceListingDTO>(attendanceDTOs, request.PageNumber, request.PageSize, totalRecords);
             }

@@ -20,6 +20,7 @@ class _AttendedPageState extends State<AttendedPage> {
   List<CourseListingDTO> _attendedLectures = [];
   List<CourseListingDTO> _filteredLectures = [];
   final LectureService _lectureService = LectureService();
+  final AttendanceService _attendanceService = AttendanceService();
 
   @override
   void initState() {
@@ -134,20 +135,30 @@ class _AttendedPageState extends State<AttendedPage> {
           actions: [
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
-                final input = passwordController.text.trim();
-                if (input.isEmpty || !input.contains(':')) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid input format")));
+                Navigator.of(dialogContext).pop();
+                final password = passwordController.text.trim();
+                if (password.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password cannot be empty")));
                   return;
                 }
-                final parts = input.split(':');
-                final sessionId = int.tryParse(parts[0]) ?? 0;
-                final token = parts[1];
-                final response = await AttendanceService().sendAttendance(sessionId: sessionId, tokenFromQR: token);
-                if (response.data['success'] == true) {
-                  _showResponseSuccessDialog(context, response);
-                } else {
-                  _showResponseErrorDialog(context, response);
+                try {
+                  final sessionId = await _attendanceService.getMyActiveSessionId();
+                  if (sessionId == null) {
+                    _showErrorDialog(context, "No active attendance session found");
+                    return;
+                  }
+
+                  final response = await _attendanceService.markAttendanceByPassword(
+                    sessionId: sessionId,
+                    password: password,
+                  );
+                  if (response.data['success'] == true) {
+                    _showResponseSuccessDialog(context, response);
+                  } else {
+                    _showResponseErrorDialog(context, response);
+                  }
+                } catch (e) {
+                  _showErrorDialog(context, e.toString().replaceFirst('Exception: ', ''));
                 }
               },
               child: const Text("OK"),
@@ -160,22 +171,29 @@ class _AttendedPageState extends State<AttendedPage> {
 
   void _openQRSystem(BuildContext context) async {
     final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => QRViewPage()));
-    if (result != null && result.contains(':')) {
-      final parts = result.split(':');
-      final sessionId = int.tryParse(parts[0]);
-      final token = parts[1];
-      if (sessionId != null && token.isNotEmpty) {
-        final response = await AttendanceService().sendAttendance(sessionId: sessionId, tokenFromQR: token);
-        if (response.data['success'] == true) {
-          _showResponseSuccessDialog(context, response);
-        } else {
-          _showResponseErrorDialog(context, response);
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid QR format")));
-      }
-    } else {
+    if (result == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("QR code could not be read.")));
+      return;
+    }
+
+    final parsed = _attendanceService.parseQrPayload(result.toString());
+    if (parsed == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid QR format")));
+      return;
+    }
+
+    try {
+      final response = await _attendanceService.markAttendanceByQR(
+        sessionId: parsed.sessionId,
+        qrToken: parsed.token,
+      );
+      if (response.data['success'] == true) {
+        _showResponseSuccessDialog(context, response);
+      } else {
+        _showResponseErrorDialog(context, response);
+      }
+    } catch (e) {
+      _showErrorDialog(context, e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -271,7 +289,7 @@ class _AttendedPageState extends State<AttendedPage> {
             child: _selectedTab == 0
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -292,41 +310,58 @@ class _AttendedPageState extends State<AttendedPage> {
   }
 
   Widget _buildWifiButton() {
-    return SizedBox(
-      width: 340,
-      height: 70,
-      child: ElevatedButton.icon(
-        onPressed: _wifiLoading ? null : _wifiCheckIn,
-        icon: _wifiLoading
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue))
-            : const Icon(Icons.wifi, color: Colors.blue),
-        label: Text(
-          _wifiLoading ? "Taranıyor..." : "Attend using WiFi",
-          style: const TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Colors.blue),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SizedBox(
+            width: constraints.maxWidth - 32,
+            height: 70,
+            child: ElevatedButton.icon(
+              onPressed: _wifiLoading ? null : _wifiCheckIn,
+              icon: _wifiLoading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue))
+                  : const Icon(Icons.wifi, color: Colors.blue),
+              label: Text(
+                _wifiLoading ? "Taranıyor..." : "Attend using WiFi",
+                style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Colors.blue),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildButton({required VoidCallback onPressed, required IconData icon, required String label}) {
-    return SizedBox(
-      width: 340,
-      height: 70,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, color: Colors.blue),
-        label: Text(label, style: const TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Colors.blue),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SizedBox(
+            width: constraints.maxWidth - 32,
+            height: 70,
+            child: ElevatedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, color: Colors.blue),
+              label: Text(label, 
+                style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Colors.blue),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

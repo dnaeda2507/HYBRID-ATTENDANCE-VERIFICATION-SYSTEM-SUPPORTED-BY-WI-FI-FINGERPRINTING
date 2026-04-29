@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -23,26 +23,60 @@ class PredictRequest(BaseModel):
     student_id: Optional[str] = None
 
 
+class SecurityMetadata(BaseModel):
+    ip_address: Optional[str] = None
+    ip_valid: bool = False
+    ip_in_network: bool = False
+    bssid_count: int = 0
+    suspicious_bssids: int = 0
+    security_score: float = 0.0
+    security_status: str = "unknown"
+    risk_factors: List[str] = []
+
+
 class PredictResponse(BaseModel):
     matched: bool
     classroom_name: Optional[str] = None
     classroom_id: Optional[str] = None
     confidence: float
     message: str
+    security: Optional[SecurityMetadata] = None  # Yeni: Güvenlik metadata'sı
 
 
-@router.post("", response_model=PredictResponse, summary="WiFi konumu tahmin et")
+@router.post("", response_model=PredictResponse, summary="WiFi konumu tahmin et (güvenlik ile)")
 def predict_location(
     payload: PredictRequest,
+    request: Request,
     db: Session = Depends(get_db),
+    auto_retrain: bool = False,
     _=Depends(verify_internal_token),
 ):
     """
     C# backend bu endpoint'i çağırır.
+    
+    Özellikler:
+    - ML model + Fallback (cosine similarity)
+    - ✅ IP Doğrulama (Okul ağında mı?)
+    - ✅ BSSID Whitelist Kontrol
+    - ✅ Security Scoring
+    - ✅ Şüpheli Aktivite Logging
+    - Geliştirilmiş RSSI normalizasyonu
+    - Model metadata'sı ile tahmin
+    
     Öğrencinin WiFi taramasını alır, hangi derslikte olduğunu tahmin eder.
     Yoklama kaydetmez — sadece tahmin döner.
     """
-    from app.services.ml_model import predict_classroom
+    from app.services.ml_model import predict_classroom, get_model_info
+    from app.services.model_retraining import auto_retrain_if_needed
+    from app.services.security_validation import (
+        validate_ip_address,
+        log_prediction_audit,
+    )
+
+    # Client IP'sini çek
+    client_ip = getattr(request.state, "client_ip", None)
+    if not client_ip:
+        client_ip = request.client.host if request.client else "unknown"
 
     # AP objelerini oluştur
     ap_objects = [
@@ -61,11 +95,75 @@ def predict_location(
             matched=False,
             confidence=0.0,
             message="AP listesi boş",
+            security=SecurityMetadata(),
         )
 
-    matched_classroom_id, confidence = predict_classroom(ap_objects, db)
+    # ─── Security Validation ────────────────────────────────────────────────
 
-    if matched_classroom_id:
+    student_id = payload.student_id or "unknown"
+    
+    # 1. IP Doğrulama
+    ip_valid, ip_metadata = validate_ip_address(db, student_id, client_ip)
+    
+    # 2. BSSID'leri çek
+    bssids = [ap.bssid for ap in payload.access_points]
+
+    # ─── ML Prediction ────────────────────────────────────────────────────────
+
+    matched_classroom_id, confidence = predict_classroom(ap_objects, db)
+    
+    # Model metadata'sı ekle
+    model_info = get_model_info()
+    
+    # Otomatik retrain kontrol et (opsiyonel)
+    if auto_retrain:
+        retrain_check = auto_retrain_if_needed(db)
+        if retrain_check["should_retrain"]:
+            model_info = get_model_info()  # Güncellenmiş metadata
+
+    # ─── Security Audit Logging ─────────────────────────────────────────────
+    
+    audit = log_prediction_audit(
+        db=db,
+        student_id=student_id,
+        ip_address=client_ip,
+        ip_valid=ip_valid,
+        ip_metadata=ip_metadata,
+        bssids=bssids,
+        matched_classroom_id=matched_classroom_id,
+        confidence_score=confidence,
+    )
+
+    # ─── Risk Profile Update (Tarihsel Risk Analizi) ────────────────────────
+    
+    from app.services.risk_analysis import update_or_create_risk_profile
+    
+    try:
+        risk_profile = update_or_create_risk_profile(db, student_id)
+        
+        # Eğer öğrenci flaglandıysa warning ekle
+        if risk_profile.is_flagged:
+            audit_message = f"{audit.security_status.upper()} [RISK: {risk_profile.risk_level.upper()}]"
+        else:
+            audit_message = f"{audit.security_status.upper()}"
+    except Exception as e:
+        print(f"Risk profili güncelleme hatası: {e}")
+        audit_message = f"{audit.security_status.upper()}"
+
+    # ─── Response Oluştur ───────────────────────────────────────────────────
+
+    security_meta = SecurityMetadata(
+        ip_address=client_ip,
+        ip_valid=ip_metadata.get("in_network", False),
+        ip_in_network=ip_metadata.get("in_network", False),
+        bssid_count=audit.bssid_count,
+        suspicious_bssids=audit.suspicious_bssids,
+        security_score=round(audit.security_score, 3),
+        security_status=audit.security_status,
+        risk_factors=audit.risk_factors.split(", ") if audit.risk_factors else [],
+    )
+
+    if matched_classroom_id and audit.is_valid_prediction:
         from app.models.wifi_models import Classroom
         classroom = db.query(Classroom).filter(
             Classroom.id == matched_classroom_id
@@ -75,11 +173,19 @@ def predict_location(
             classroom_name=classroom.name if classroom else matched_classroom_id,
             classroom_id=matched_classroom_id,
             confidence=round(confidence, 3),
-            message="Konum doğrulandı ✓",
+            message=f"✓ Doğrulandı [Model: {model_info.get('model_type', 'KNN')} | Sec: {audit_message}]",
+            security=security_meta,
         )
     else:
+        confidence_threshold = model_info.get('confidence_threshold', 0.60)
+        reason = "IP doğrulanamadı" if not ip_valid else \
+                 "ML güveni yetersiz" if confidence < confidence_threshold else \
+                 "Bilinmeyen BSSID'ler" if audit.suspicious_bssids > 0 else \
+                 "Bilinmeyen sebep"
+        
         return PredictResponse(
             matched=False,
             confidence=round(confidence, 3),
-            message=f"Konum doğrulanamadı. Skor: {round(confidence, 3)}, gereken: 0.60",
+            message=f"✗ Doğrulanmadı [{reason}] (Sec: {audit_message})",
+            security=security_meta,
         )

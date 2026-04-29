@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using CleanArchitecture.Core.Entities.Wifi;
+using CleanArchitecture.Core.Entities.Security;
 
 namespace CleanArchitecture.Infrastructure.Contexts
 {
@@ -38,6 +39,10 @@ namespace CleanArchitecture.Infrastructure.Contexts
         public DbSet<StudentWifiAccessPoint> StudentWifiAccessPoints { get; set; }
         public DbSet<WifiTrainingAccessPoint> WifiTrainingAccessPoints { get; set; }
         public DbSet<Classroom> Classrooms { get; set; }
+
+        // Security related DbSets
+        public DbSet<SecurityEvent> SecurityEvents { get; set; }
+        public DbSet<StudentRiskScore> StudentRiskScores { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDateTimeService dateTime, IAuthenticatedUserService authenticatedUser) : base(options)
         {
