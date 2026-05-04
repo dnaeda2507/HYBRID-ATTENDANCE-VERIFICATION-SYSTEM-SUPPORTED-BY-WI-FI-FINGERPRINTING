@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CleanArchitecture.Application.DTOs.Wifi;
 using CleanArchitecture.Application.Interfaces;
@@ -52,7 +53,8 @@ namespace CleanArchitecture.Infrastructure.Services
                 var json = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<FastApiPredictResult>(json, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower  // is_suspicious → IsSuspicious
                 });
 
                 return result ?? new FastApiPredictResult { Matched = false, Message = "Boş yanıt" };
