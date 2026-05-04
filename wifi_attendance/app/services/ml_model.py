@@ -611,3 +611,273 @@ def get_model_history() -> List[Dict]:
         return history[-20:]  # Son 20 eğitimi
     except:
         return []
+
+
+# ─── 4 Model Karar Analizi ────────────────────────────────────────────────────
+
+def predict_with_model_breakdown(
+    student_aps: List,
+    db: Session,
+) -> Dict:
+    """
+    Her modelin (KNN, RF, SVM, GB) bireysel kararını VE Ensemble kararını döndür.
+    Swagger ve frontend'de hangi modelin ne dediği görülebilir.
+
+    Döner:
+    {
+        "ensemble": { classroom_id, classroom_name, confidence, above_threshold },
+        "models": {
+            "knn":  { display_name, classroom_id, classroom_name, confidence,
+                      above_threshold, voted_with_ensemble, class_probabilities },
+            "rf":   { ... },
+            "svm":  { ... },
+            "gb":   { ... },
+        },
+        "model_type": "Ensemble" | "KNN" | "Cosine-Fallback",
+        "agreement_rate": 0.75,  # modellerin kaçı Ensemble ile aynı kararda
+        "fallback": false,
+    }
+    """
+    classrooms_map: Dict[str, str] = {}
+
+    # ── Model dosyaları yoksa cosine fallback ──────────────────────────────
+    if not os.path.exists(MODEL_PATH):
+        from app.services.wifi_service import match_classroom
+        classroom_id, confidence = match_classroom(db, student_aps)
+        classrooms_map = {c.id: c.name for c in db.query(Classroom).all()}
+        classroom_name = classrooms_map.get(classroom_id, classroom_id) if classroom_id else None
+        return {
+            "ensemble": {
+                "classroom_id": classroom_id,
+                "classroom_name": classroom_name,
+                "confidence": round(confidence, 4),
+                "above_threshold": confidence >= CONFIDENCE_THRESHOLD,
+            },
+            "models": {},
+            "model_type": "Cosine-Fallback",
+            "agreement_rate": None,
+            "fallback": True,
+        }
+
+    try:
+        ensemble  = joblib.load(MODEL_PATH)
+        bssid_idx = joblib.load(BSSID_INDEX_PATH)
+        le        = joblib.load(LABEL_ENCODER_PATH)
+        normalizer= joblib.load(RSSI_SCALER_PATH)
+
+        classrooms_map = {c.id: c.name for c in db.query(Classroom).all()}
+
+        vec = scan_to_vector(
+            student_aps, bssid_idx, normalizer,
+            missing_strategy=MISSING_RSSI_STRATEGY,
+        ).reshape(1, -1)
+
+        # ── Ensemble kararı ────────────────────────────────────────────────
+        ens_proba      = ensemble.predict_proba(vec)[0]
+        ens_best_idx   = int(np.argmax(ens_proba))
+        ens_confidence = float(ens_proba[ens_best_idx])
+        ens_cls_id     = le.inverse_transform([ens_best_idx])[0]
+        ens_cls_name   = classrooms_map.get(ens_cls_id, ens_cls_id)
+
+        ensemble_result = {
+            "classroom_id":    ens_cls_id,
+            "classroom_name":  ens_cls_name,
+            "confidence":      round(ens_confidence, 4),
+            "above_threshold": ens_confidence >= CONFIDENCE_THRESHOLD,
+        }
+
+        # ── Bireysel model kararları ────────────────────────────────────────
+        DISPLAY_NAMES = {
+            "knn": "K-Nearest Neighbors (KNN)",
+            "rf":  "Random Forest (RF)",
+            "svm": "Support Vector Machine (SVM)",
+            "gb":  "Gradient Boosting (GB)",
+        }
+
+        # VotingClassifier alt modellerini çıkar
+        if hasattr(ensemble, "estimators_") and hasattr(ensemble, "estimators"):
+            sub_estimators = list(zip(
+                [name for name, _ in ensemble.estimators],
+                ensemble.estimators_,
+            ))
+        else:
+            sub_estimators = [("knn", ensemble)]
+
+        models_breakdown: Dict[str, Dict] = {}
+        agreed_count = 0
+
+        for name, estimator in sub_estimators:
+            try:
+                sub_proba      = estimator.predict_proba(vec)[0]
+                sub_best_idx   = int(np.argmax(sub_proba))
+                sub_confidence = float(sub_proba[sub_best_idx])
+                sub_cls_id     = le.inverse_transform([sub_best_idx])[0]
+                sub_cls_name   = classrooms_map.get(sub_cls_id, sub_cls_id)
+                voted_same     = (sub_cls_id == ens_cls_id)
+                if voted_same:
+                    agreed_count += 1
+
+                # Sınıf başına olasılık dağılımı (name → confidence)
+                class_probs = {
+                    classrooms_map.get(
+                        le.inverse_transform([i])[0], le.inverse_transform([i])[0]
+                    ): round(float(p), 4)
+                    for i, p in enumerate(sub_proba)
+                }
+
+                models_breakdown[name] = {
+                    "display_name":        DISPLAY_NAMES.get(name, name.upper()),
+                    "classroom_id":        sub_cls_id,
+                    "classroom_name":      sub_cls_name,
+                    "confidence":          round(sub_confidence, 4),
+                    "above_threshold":     sub_confidence >= CONFIDENCE_THRESHOLD,
+                    "voted_with_ensemble": voted_same,
+                    "class_probabilities": class_probs,
+                }
+            except Exception as sub_err:
+                models_breakdown[name] = {
+                    "display_name": DISPLAY_NAMES.get(name, name.upper()),
+                    "error":        str(sub_err),
+                }
+
+        n_models       = len(sub_estimators)
+        agreement_rate = round(agreed_count / n_models, 4) if n_models > 0 else None
+
+        # Model tipi (metadata'dan)
+        model_type = "Ensemble"
+        if os.path.exists(MODEL_METADATA_PATH):
+            try:
+                with open(MODEL_METADATA_PATH, "r") as f:
+                    meta = json.load(f)
+                model_type = meta.get("model_type", "Ensemble")
+            except Exception:
+                pass
+
+        # ── Çatışma / Anlaşmazlık Analizi ─────────────────────────────────────
+        #
+        # Soft Voting nasıl çalışır:
+        #   VotingClassifier her modelin olasılık vektörünü ORTALARAK final kararı verir.
+        #   Yani oy sayısı değil, sayısal ortalama belirler.
+        #
+        # Bir model farklı sınıf seçerse NE OLUR:
+        #   - O modelin yüksek olasılığı farklı bir sınıfa gider → ensemble'ın o sınıfa
+        #     verdiği ağırlık düşer, doğru sınıfın ortalaması azalır.
+        #   - Sonuç: ens_confidence DÜŞER (anlaşmazlık ne kadar büyükse o kadar çok)
+        #   - Eşiğin altına düşerse (< 0.60) matched=False → yoklama kaydedilmez.
+        #
+        # Bir modelin skoru düşükse (ama aynı sınıfı seçiyorsa):
+        #   - O model doğru sınıfa az olasılık veriyor → ortalamayı aşağı çeker
+        #   - Yeterince çekerse ensemble confidence eşiğin altına düşer
+
+        dissenters = []          # Farklı sınıf seçen modeller
+        low_conf_models = []     # Aynı sınıf ama düşük confidence
+
+        for mname, minfo in models_breakdown.items():
+            if "error" in minfo:
+                continue
+            if not minfo.get("voted_with_ensemble", True):
+                dissenters.append({
+                    "model":            mname,
+                    "display_name":     minfo["display_name"],
+                    "voted_for":        minfo["classroom_name"],
+                    "voted_for_id":     minfo["classroom_id"],
+                    "its_confidence":   minfo["confidence"],
+                    # Bu modelin ens_cls_id'ye verdiği olasılık (ne kadar "çekiyor")
+                    "pull_on_winner":   minfo["class_probabilities"].get(ens_cls_name, 0.0),
+                })
+            elif minfo["confidence"] < CONFIDENCE_THRESHOLD:
+                low_conf_models.append({
+                    "model":          mname,
+                    "display_name":   minfo["display_name"],
+                    "confidence":     minfo["confidence"],
+                    "classroom_name": minfo["classroom_name"],
+                })
+
+        # Konsensüs seviyesi
+        if agreed_count == n_models:
+            consensus_level = "full"          # 4/4 aynı
+            consensus_label = "✅ Tam Uyum"
+        elif agreed_count >= (n_models * 0.75):
+            consensus_level = "majority"      # 3/4 aynı
+            consensus_label = "🟡 Çoğunluk Uyumu"
+        elif agreed_count >= (n_models * 0.5):
+            consensus_level = "split"         # 2/4 aynı
+            consensus_label = "🟠 Bölünmüş Karar"
+        else:
+            consensus_level = "no_consensus"  # 1/4 veya 0/4
+            consensus_label = "🔴 Uyumsuzluk"
+
+        # Ensemble güveni ne kadar etkilendi?
+        # Teorik max confidence (tüm modeller tam uyuşsaydı) vs gerçek
+        max_any_model_on_winner = max(
+            (minfo["class_probabilities"].get(ens_cls_name, 0.0)
+             for minfo in models_breakdown.values() if "error" not in minfo),
+            default=ens_confidence,
+        )
+        confidence_penalty = round(max_any_model_on_winner - ens_confidence, 4)
+
+        # Yoklamaya etkisi
+        if ens_confidence < CONFIDENCE_THRESHOLD:
+            attendance_impact = "REDDEDILDI — Ensemble güveni eşiğin altında, yoklama kaydedilmez"
+        elif dissenters:
+            attendance_impact = (
+                f"KABUL EDİLDİ — Ama {len(dissenters)} model farklı oy kullandı; "
+                f"confidence {confidence_penalty:.3f} düşürüldü"
+            )
+        elif low_conf_models:
+            attendance_impact = (
+                f"KABUL EDİLDİ — Ama {len(low_conf_models)} model düşük güvenle oy kullandı; "
+                f"ensemble confidence etkilendi"
+            )
+        else:
+            attendance_impact = "KABUL EDİLDİ — Tüm modeller uyuşuyor, güçlü tahmin"
+
+        conflict_analysis = {
+            "consensus_level":    consensus_level,
+            "consensus_label":    consensus_label,
+            "agreed_models":      agreed_count,
+            "total_models":       n_models,
+            "dissenters":         dissenters,          # Farklı oy kullananlar
+            "low_confidence_models": low_conf_models,  # Zayıf ama aynı yönde oy kullananlar
+            "confidence_penalty": confidence_penalty,  # Anlaşmazlığın confidence'a maliyeti
+            "threshold":          CONFIDENCE_THRESHOLD,
+            "attendance_impact":  attendance_impact,
+            # ── Kural özeti ──────────────────────────────────────────────────
+            "voting_rules": {
+                "method":       "soft_voting",
+                "description":  "Her modelin olasılık vektörleri ortalamasına göre karar verilir",
+                "threshold":    CONFIDENCE_THRESHOLD,
+                "if_dissenter": "Farklı sınıf seçen model ensemble confidence'ı düşürür",
+                "if_low_conf":  "Aynı sınıfı seçen ama düşük güvenli model de confidence'ı aşağı çeker",
+                "block_rule":   f"Ensemble confidence < {CONFIDENCE_THRESHOLD} ise yoklama reddedilir",
+            },
+        }
+
+        return {
+            "ensemble":         ensemble_result,
+            "models":           models_breakdown,
+            "conflict_analysis": conflict_analysis,
+            "model_type":       model_type,
+            "agreement_rate":   agreement_rate,
+            "fallback":         False,
+        }
+
+
+    except Exception as e:
+        print(f"Model breakdown hatası: {e}, cosine fallback")
+        from app.services.wifi_service import match_classroom
+        classroom_id, confidence = match_classroom(db, student_aps)
+        classroom_name = classrooms_map.get(classroom_id, classroom_id) if classroom_id else None
+        return {
+            "ensemble": {
+                "classroom_id":    classroom_id,
+                "classroom_name":  classroom_name,
+                "confidence":      round(confidence, 4),
+                "above_threshold": confidence >= CONFIDENCE_THRESHOLD,
+            },
+            "models":        {},
+            "model_type":    "Cosine-Fallback",
+            "agreement_rate": None,
+            "fallback":      True,
+            "error":         str(e),
+        }

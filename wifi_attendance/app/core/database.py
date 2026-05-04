@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "mssql+pymssql://sqlserver:Attendance2026!@136.112.84.168:1433/CSEProjectTest"
+    DATABASE_URL: str = "mssql+pymssql://sa:YourPassword@localhost:1433/CSEProject"  # Dev fallback — prod .env override eder
     SECRET_KEY: str = "change-this-in-production"
     ALGORITHM: str = "HS256"
     INTERNAL_TOKEN: str = "wifi-ml-internal-secret-2024"

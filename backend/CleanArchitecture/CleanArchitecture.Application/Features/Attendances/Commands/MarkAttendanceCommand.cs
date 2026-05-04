@@ -27,6 +27,7 @@ namespace CleanArchitecture.Application.Features.Attendances.Commands
         public int SessionId { get; set; }
         public string Token { get; set; }    // QR/Password için
         public AttendanceMethod Method { get; set; } = AttendanceMethod.QRCode;
+        public bool IsSuspicious { get; set; } // Model disagreement flag
     }
 
     public class MarkAttendanceCommandHandler : IRequestHandler<MarkAttendanceCommand, Unit>
@@ -86,7 +87,8 @@ namespace CleanArchitecture.Application.Features.Attendances.Commands
                 SessionId = session.Id,
                 StudentId = studentId,
                 MarkedAtUtc = DateTime.UtcNow,
-                IsWifiVerified = (request.Method == AttendanceMethod.Wifi)
+                IsWifiVerified = (request.Method == AttendanceMethod.Wifi),
+                IsSuspicious = request.IsSuspicious
             });
 
             return Unit.Value;

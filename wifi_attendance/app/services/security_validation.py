@@ -92,10 +92,11 @@ def validate_ip_address(
         "validation_result": "unknown",
     }
     
-    # Loopback veya invalid kontrol
+    # Loopback = localhost/Docker iç trafiği — VPN değil, ama okul ağında da sayılmaz
     if is_loopback_ip(ip_address):
         result["validation_result"] = "loopback"
-        result["is_vpn_suspected"] = True
+        result["is_vpn_suspected"] = False   # ✅ Düzeltildi: loopback ≠ VPN
+        result["is_valid"] = False
         return False, result
     
     # Okul ağında mı kontrol et

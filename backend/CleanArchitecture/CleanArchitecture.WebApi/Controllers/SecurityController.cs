@@ -157,7 +157,7 @@ namespace CleanArchitecture.WebApi.Controllers
         /// </summary>
         [HttpPost("mark-for-review")]
         [Authorize(Roles = "Admin,ItStaff")]
-        public async Task<ActionResult> MarkStudentForReview(string studentId, [FromBody] ReviewRequestDto request)
+        public async Task<ActionResult> MarkStudentForReview([FromQuery] string studentId, [FromBody] ReviewRequestDto request) // ✅ [FromQuery] eklendi
         {
             try
             {
@@ -175,7 +175,7 @@ namespace CleanArchitecture.WebApi.Controllers
         /// </summary>
         [HttpPost("clear-review")]
         [Authorize(Roles = "Admin,ItStaff")]
-        public async Task<ActionResult> ClearReviewStatus(string studentId, [FromBody] ClearReviewRequestDto request)
+        public async Task<ActionResult> ClearReviewStatus([FromQuery] string studentId, [FromBody] ClearReviewRequestDto request) // ✅ [FromQuery] eklendi
         {
             try
             {

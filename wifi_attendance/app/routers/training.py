@@ -57,14 +57,13 @@ def add_sample(
     from app.models.wifi_models import WifiTrainingAccessPoint
     sample = WifiTrainingSample(
         classroom_id=payload.classroom_id,
-        scanned_by=current_user["id"],
-        notes=payload.notes,
+        notes=payload.notes,  # scanned_by alanı modelde yok — kaldırıldı
     )
     db.add(sample)
     db.flush()
     for ap in payload.access_points:
         db.add(WifiTrainingAccessPoint(
-            sample_id=sample.id,
+            training_sample_id=sample.id,  # ✅ Düzeltildi: sample_id → training_sample_id
             bssid=ap.bssid,
             ssid=ap.ssid,
             rssi=ap.rssi,

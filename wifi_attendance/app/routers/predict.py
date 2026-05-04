@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -41,6 +41,7 @@ class PredictResponse(BaseModel):
     confidence: float
     message: str
     security: Optional[SecurityMetadata] = None  # Yeni: Güvenlik metadata'sı
+    is_suspicious: bool = False  # Anlaşmazlık varsa true
 
 
 @router.post("", response_model=PredictResponse, summary="WiFi konumu tahmin et (güvenlik ile)")
@@ -110,7 +111,29 @@ def predict_location(
 
     # ─── ML Prediction ────────────────────────────────────────────────────────
 
-    matched_classroom_id, confidence = predict_classroom(ap_objects, db)
+    from app.services.ml_model import predict_with_model_breakdown
+    
+    # AP objeleri listesini kullan (zaten yukarıda oluşturuldu varsayalım)
+    ap_objects = [
+        type('AP', (), {
+            'bssid': ap.bssid,
+            'ssid': ap.ssid,
+            'rssi': ap.rssi,
+            'frequency': ap.frequency,
+            'channel': None,
+        })()
+        for ap in payload.access_points
+    ]
+
+    breakdown = predict_with_model_breakdown(ap_objects, db)
+    matched_classroom_id = breakdown["ensemble"]["classroom_id"]
+    confidence = breakdown["ensemble"]["confidence"]
+    agreement_rate = breakdown.get("agreement_rate")
+    
+    # Anlaşmazlık durumu (yarıdan az veya eşit uyum varsa şüpheli)
+    is_suspicious_model = False
+    if agreement_rate is not None and agreement_rate <= 0.5:
+        is_suspicious_model = True
     
     # Model metadata'sı ekle
     model_info = get_model_info()
@@ -175,6 +198,7 @@ def predict_location(
             confidence=round(confidence, 3),
             message=f"✓ Doğrulandı [Model: {model_info.get('model_type', 'KNN')} | Sec: {audit_message}]",
             security=security_meta,
+            is_suspicious=is_suspicious_model,
         )
     else:
         confidence_threshold = model_info.get('confidence_threshold', 0.60)
@@ -188,4 +212,78 @@ def predict_location(
             confidence=round(confidence, 3),
             message=f"✗ Doğrulanmadı [{reason}] (Sec: {audit_message})",
             security=security_meta,
+            is_suspicious=is_suspicious_model,
         )
+
+
+# ─── 4 Model Karar Görünürlüğü ───────────────────────────────────────────────
+
+class ModelDecision(BaseModel):
+    display_name: str
+    classroom_id: Optional[str] = None
+    classroom_name: Optional[str] = None
+    confidence: float
+    above_threshold: bool
+    voted_with_ensemble: bool
+    class_probabilities: Dict[str, float] = {}
+    error: Optional[str] = None
+
+
+class ModelBreakdownResponse(BaseModel):
+    ensemble: Dict[str, Any]
+    models: Dict[str, Any]
+    conflict_analysis: Optional[Dict[str, Any]] = None  # Anlaşmazlık & konsensüs analizi
+    model_type: str
+    agreement_rate: Optional[float] = None
+    fallback: bool
+    error: Optional[str] = None
+
+
+@router.post(
+    "/breakdown",
+    response_model=ModelBreakdownResponse,
+    summary="4 Modelin Bireysel Kararlarını Gör (KNN / RF / SVM / GB + Ensemble)",
+    description="""
+Her tahmin için KNN, Random Forest, SVM ve Gradient Boosting modellerinin
+bireysel kararlarını gösterir.
+
+**Alanlar:**
+- `ensemble`: Tüm modellerin oylamasıyla oluşan final karar
+- `models.knn / rf / svm / gb`: Her modelin ayrı kararı, confidence'ı ve hangi sınıfa oy verdiği
+- `class_probabilities`: Her modelin derslik başına verdiği olasılık dağılımı
+- `agreement_rate`: Modellerin yüzde kaçı aynı kararda (1.0 = tüm modeller uyuşuyor)
+- `voted_with_ensemble`: Bu model final kararla aynı mı oyladı?
+""",
+)
+def predict_breakdown(
+    payload: PredictRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    _=Depends(verify_internal_token),
+):
+    from app.services.ml_model import predict_with_model_breakdown
+
+    # AP objelerini oluştur
+    ap_objects = [
+        type('AP', (), {
+            'bssid': ap.bssid,
+            'ssid': ap.ssid,
+            'rssi': ap.rssi,
+            'frequency': ap.frequency,
+            'channel': None,
+        })()
+        for ap in payload.access_points
+    ]
+
+    if not ap_objects:
+        return ModelBreakdownResponse(
+            ensemble={"classroom_id": None, "confidence": 0.0, "above_threshold": False},
+            models={},
+            model_type="N/A",
+            agreement_rate=None,
+            fallback=True,
+            error="AP listesi boş",
+        )
+
+    result = predict_with_model_breakdown(ap_objects, db)
+    return ModelBreakdownResponse(**result)

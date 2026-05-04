@@ -25,8 +25,8 @@ namespace CleanArchitecture.Infrastructure.Services
         {
             _httpClient = httpClient;
             _logger = logger;
-            _baseUrl = configuration["FastApi:BaseUrl"] ?? "http://localhost:8000";
-            _internalToken = configuration["FastApi:InternalToken"] ?? "wifi-ml-internal-secret-2024";
+            _baseUrl = configuration["FastAPI:BaseUrl"] ?? "http://localhost:8000";       // ✅ Düzeltildi: FastApi → FastAPI
+            _internalToken = configuration["FastAPI:InternalToken"] ?? "wifi-ml-internal-secret-2024"; // ✅ Düzeltildi
         }
 
         public async Task<FastApiPredictResult> PredictLocationAsync(List<AccessPointDto> accessPoints)

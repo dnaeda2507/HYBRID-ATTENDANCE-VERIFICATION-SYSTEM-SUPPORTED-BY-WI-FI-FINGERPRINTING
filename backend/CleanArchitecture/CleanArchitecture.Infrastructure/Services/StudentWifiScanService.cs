@@ -11,6 +11,7 @@ using CleanArchitecture.Application.Interfaces.Repositories;
 using CleanArchitecture.Core.Entities.Wifi;
 using CleanArchitecture.Core.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -25,6 +26,7 @@ namespace CleanArchitecture.Infrastructure.Services
         private readonly IConfiguration _config;
         private readonly ILogger<StudentWifiScanService> _logger;
         private readonly IAuthenticatedUserService _currentUser;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public StudentWifiScanService(
             IStudentWifiScanRepositoryAsync repo,
@@ -33,7 +35,8 @@ namespace CleanArchitecture.Infrastructure.Services
             IHttpClientFactory httpClientFactory,
             IConfiguration config,
             ILogger<StudentWifiScanService> logger,
-            IAuthenticatedUserService currentUser)
+            IAuthenticatedUserService currentUser,
+            IHttpContextAccessor httpContextAccessor)
         {
             _repo = repo;
             _mapper = mapper;
@@ -42,6 +45,7 @@ namespace CleanArchitecture.Infrastructure.Services
             _config = config;
             _logger = logger;
             _currentUser = currentUser;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<int> CreateAsync(StudentWifiScanCreateDto dto)
@@ -65,7 +69,8 @@ namespace CleanArchitecture.Infrastructure.Services
                     await _mediator.Send(new MarkAttendanceCommand
                     {
                         SessionId = dto.SessionId,
-                        Method = (AttendanceMethod)2  // WiFi = 2
+                        Method = (AttendanceMethod)2,  // WiFi = 2
+                        IsSuspicious = prediction.IsSuspicious
                     });
                 }
                 else
@@ -95,6 +100,8 @@ namespace CleanArchitecture.Infrastructure.Services
         {
             var client = _httpClientFactory.CreateClient("FastAPI");
             var internalToken = _config["FastAPI:InternalToken"];
+            var studentId = _currentUser.UserId;
+            var clientIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
 
             var request = new HttpRequestMessage(HttpMethod.Post, "/predict")
             {
@@ -106,9 +113,11 @@ namespace CleanArchitecture.Infrastructure.Services
                         rssi = ap.Rssi,
                     }),
                     session_id = dto.SessionId,
+                    student_id = studentId
                 })
             };
             request.Headers.Add("X-Internal-Token", internalToken);
+            request.Headers.Add("X-Forwarded-For", clientIp);
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -120,6 +129,7 @@ namespace CleanArchitecture.Infrastructure.Services
             string? ClassroomName,
             string? ClassroomId,
             double Confidence,
-            string Message);
+            string Message,
+            bool IsSuspicious);
     }
 }

@@ -42,9 +42,16 @@ const SessionReportModal = ({
                 </p>
               ) : (
                 reportData.map((user) => (
-                  <div key={user.id} className="flex justify-between py-2">
-                    <span>{user.fullName}</span>
-                    <span>{user.markedAtUtc}</span>
+                  <div key={user.id} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span>{user.fullName}</span>
+                      {user.isSuspicious && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
+                          <span>⚠️</span> Suspicious
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-gray-500 text-sm flex items-center">{user.markedAtUtc}</span>
                   </div>
                 ))
               )}

@@ -18,8 +18,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# IP Extraction Middleware
-app.add_middleware(ip_extraction_middleware)
+# IP Extraction Middleware (function-based → @app.middleware decorator)
+@app.middleware("http")
+async def _ip_middleware(request, call_next):
+    return await ip_extraction_middleware(request, call_next)
 
 @app.on_event("startup")
 def startup():
