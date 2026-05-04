@@ -97,8 +97,24 @@ async def upload_csv(
     else:
         result = import_from_custom_csv(content, db, scanned_by=current_user["id"])
     
+    # Auto-whitelist detected BSSIDs
+    if result.get("success") and "detected_bssids" in result:
+        from app.services.security_validation import add_bssid_to_whitelist
+        for bssid in result["detected_bssids"]:
+            try:
+                add_bssid_to_whitelist(
+                    db=db,
+                    bssid=bssid,
+                    ssid="eduroam",  # Varsayılan
+                    location="Auto-Imported",
+                    building="Campus"
+                )
+            except Exception:
+                pass # Zaten varsa hata vermesin
+    
     # Auto-retrain
     if auto_retrain and result.get("success") and result.get("created_samples", 0) > 0:
+        from app.services.model_retraining import auto_retrain_if_needed
         retrain_result = auto_retrain_if_needed(db)
         result["auto_retrain"] = retrain_result["should_retrain"]
         result["retrain_reason"] = retrain_result["reason"]
