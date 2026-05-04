@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using CleanArchitecture.Application.Interfaces;
 using CleanArchitecture.Infrastructure.Services;
@@ -99,6 +99,9 @@ namespace CleanArchitecture.Infrastructure
             services.AddTransient<IEmailService, EmailService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+            // ✅ IHttpContextAccessor — StudentWifiScanService ve AuthenticatedUserService için gerekli
+            services.AddHttpContextAccessor();
+
 
             #region Repositories
             services.AddTransient(typeof(IGenericRepositoryAsync<>), typeof(GenericRepositoryAsync<>));
@@ -115,7 +118,17 @@ namespace CleanArchitecture.Infrastructure
 
             services.AddTransient<IStudentWifiScanService, StudentWifiScanService>();
             services.AddTransient<IWifiTrainingSampleService, WifiTrainingSampleService>();
+            services.AddTransient<IRiskScoreService, RiskScoreService>();
+            services.AddTransient<ISecurityEventService, SecurityEventService>();
             services.AddHttpClient<IFastApiService, FastApiService>();
+
+            // ✅ Named "FastAPI" client — StudentWifiScanService.CreateClient("FastAPI") için
+            services.AddHttpClient("FastAPI", client =>
+            {
+                var baseUrl = configuration["FastAPI:BaseUrl"] ?? "http://localhost:8000";
+                client.BaseAddress = new Uri(baseUrl);
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
 
         }
     }

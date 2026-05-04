@@ -148,6 +148,9 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("StudentId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("IsSuspicious")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsWifiVerified")
                         .HasColumnType("bit");
 
@@ -404,6 +407,140 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .HasFilter("[Code] IS NOT NULL");
 
                     b.ToTable("Lectures");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Security.SecurityEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttendanceSessionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BSSIDInvolved")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DetectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IpInvolved")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double?>("WifiSecurityScore")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("SecurityEvents");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Security.StudentRiskScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("IpSecurityScore")
+                        .HasColumnType("float");
+
+                    b.Property<bool>("IsUnderReview")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastAttendanceTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("LastAttendanceWifiScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LowSecurityAttendanceCount")
+                        .HasColumnType("int");
+
+                    b.Property<double>("OverallRiskScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReviewReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReviewStartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SuspiciousEventCount")
+                        .HasColumnType("int");
+
+                    b.Property<double>("WifiSecurityScore")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentRiskScores");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Sessions.Session", b =>
@@ -851,6 +988,28 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Faculty");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Security.SecurityEvent", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Security.StudentRiskScore", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Sessions.Session", b =>

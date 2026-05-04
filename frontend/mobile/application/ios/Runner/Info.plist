@@ -3,8 +3,6 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<key>NSLocationWhenInUseUsageDescription</key>
-<string>WiFi scanning needs location permission</string>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Application</string>
@@ -47,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- WiFi ve Location Permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WiFi taraması ve konumlama için konum izni gerekmektedir</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Yerel ağdaki WiFi ağlarını taramak için izin gerekmektedir</string>
+	<key>NSBonjourServiceTypes</key>
+	<array>
+		<string>_http._tcp</string>
+	</array>
 </dict>
 </plist>

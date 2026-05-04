@@ -11,6 +11,7 @@ namespace CleanArchitecture.Application.Interfaces
         public string ClassroomId { get; set; }
         public double Confidence { get; set; }
         public string Message { get; set; }
+        public bool IsSuspicious { get; set; }
     }
 
     public interface IFastApiService

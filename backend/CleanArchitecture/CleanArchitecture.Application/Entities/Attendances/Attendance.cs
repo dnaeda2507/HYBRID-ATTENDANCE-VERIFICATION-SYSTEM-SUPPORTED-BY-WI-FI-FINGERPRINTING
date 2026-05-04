@@ -13,6 +13,7 @@ namespace CleanArchitecture.Core.Entities.Attendances
 
         public double? WifiConfidenceScore { get; set; }
         public bool IsWifiVerified { get; set; }
+        public bool IsSuspicious { get; set; }
 
     }
 }

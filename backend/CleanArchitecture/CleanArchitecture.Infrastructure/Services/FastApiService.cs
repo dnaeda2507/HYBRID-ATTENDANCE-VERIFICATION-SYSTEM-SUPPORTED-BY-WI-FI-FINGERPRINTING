@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CleanArchitecture.Application.DTOs.Wifi;
 using CleanArchitecture.Application.Interfaces;
@@ -25,8 +26,8 @@ namespace CleanArchitecture.Infrastructure.Services
         {
             _httpClient = httpClient;
             _logger = logger;
-            _baseUrl = configuration["FastApi:BaseUrl"] ?? "http://localhost:8000";
-            _internalToken = configuration["FastApi:InternalToken"] ?? "wifi-ml-internal-secret-2024";
+            _baseUrl = configuration["FastAPI:BaseUrl"] ?? "http://localhost:8000";       // ✅ Düzeltildi: FastApi → FastAPI
+            _internalToken = configuration["FastAPI:InternalToken"] ?? "wifi-ml-internal-secret-2024"; // ✅ Düzeltildi
         }
 
         public async Task<FastApiPredictResult> PredictLocationAsync(List<AccessPointDto> accessPoints)
@@ -52,7 +53,8 @@ namespace CleanArchitecture.Infrastructure.Services
                 var json = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<FastApiPredictResult>(json, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower  // is_suspicious → IsSuspicious
                 });
 
                 return result ?? new FastApiPredictResult { Matched = false, Message = "Boş yanıt" };
