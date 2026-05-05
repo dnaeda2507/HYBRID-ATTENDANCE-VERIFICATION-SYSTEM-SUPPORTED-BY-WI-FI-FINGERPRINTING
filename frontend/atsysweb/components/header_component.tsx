@@ -4,17 +4,46 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { useAppSelector } from '@/redux/hooks';
 
-const navLinks = [
+interface NavLink {
+  href: string;
+  label: string;
+  roles?: string[];
+}
+
+const navLinks: NavLink[] = [
   { href: '/', label: 'Home' },
-  { href: '/users', label: 'Users' },
-  { href: '/lectures', label: 'Lectures' },
+  { href: '/users', label: 'Users', roles: ['ItStaff', 'It Staff'] },
+  {
+    href: '/lectures',
+    label: 'Lectures',
+    roles: ['ItStaff', 'It Staff', 'Teacher', 'AcademicStaff', 'Academic Staff'],
+  },
+  {
+    href: '/courses',
+    label: 'Courses',
+    roles: ['ItStaff', 'It Staff', 'Teacher', 'AcademicStaff', 'Academic Staff'],
+  },
   { href: '/attendance', label: 'Attendance' },
+  { href: '/settings', label: 'Settings' },
 ];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const userRoles = useAppSelector((state) => state.auth.roles) ?? [];
+
+  const normalizeRole = (role: string) => role.replace(/\s+/g, '').toLowerCase();
+
+  const filteredLinks = navLinks.filter((link) => {
+    if (!link.roles) {
+      return true;
+    }
+
+    const normalizedUserRoles = userRoles.map(normalizeRole);
+    return link.roles.some((role) => normalizedUserRoles.includes(normalizeRole(role)));
+  });
 
   // Close menu when route changes
   useEffect(() => {
@@ -68,7 +97,7 @@ export default function Header() {
       {/* Mobile menu */}
       {isOpen && (
         <nav className="border-t border-gray-200">
-          {navLinks.map((link) => (
+          {filteredLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
