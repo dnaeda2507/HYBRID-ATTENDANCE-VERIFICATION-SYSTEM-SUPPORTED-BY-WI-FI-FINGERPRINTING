@@ -308,7 +308,7 @@ export function UserForm({ userId }: { userId?: string }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="flex-1 px-4 py-2 border-b bg-gray-50"
+              className="min-w-0 flex-1 px-4 py-2 border-b bg-gray-50"
             required
           />
           <input
@@ -316,7 +316,7 @@ export function UserForm({ userId }: { userId?: string }) {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm Password"
-            className="flex-1 px-4 py-2 border-b bg-gray-50"
+              className="min-w-0 flex-1 px-4 py-2 border-b bg-gray-50"
             required
           />
         </div>
