@@ -34,9 +34,22 @@
     border: none;
     background: none;
     flex: 1;
+      min-width: 0;
     outline: none;
     font-size: 16px;
   }
+
+    .password-toggle {
+      border: none;
+      background: none;
+      padding: 0;
+      margin-left: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #3498db;
+    }
   
   .options {
     display: flex;
