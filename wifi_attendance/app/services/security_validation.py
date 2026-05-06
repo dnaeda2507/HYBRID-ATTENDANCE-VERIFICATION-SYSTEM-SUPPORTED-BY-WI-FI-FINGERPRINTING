@@ -23,6 +23,7 @@ from app.models.wifi_models import (
 # Varsayılan okul ağı CIDR range'leri
 DEFAULT_NETWORK_RANGES = [
     "10.10.0.0/16",      # Kampüs Ağı
+    "10.48.0.0/16",      # Eduroam Kampüs Ağı
     "192.168.1.0/24",    # Yönetim Ağı
     "172.16.0.0/12",     # Özel Ağ
 ]
