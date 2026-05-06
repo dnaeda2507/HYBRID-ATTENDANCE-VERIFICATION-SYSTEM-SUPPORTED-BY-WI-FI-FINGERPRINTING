@@ -37,6 +37,11 @@ class _HomeState extends State<Home> {
     try {
       final user = await _userService.getCurrentUser();
       if (mounted) {
+        if (user == null) {
+          // Token geçersiz veya kullanıcı bulunamadı → login'e yönlendir
+          _forceLogout('Session expired. Please login again.');
+          return;
+        }
         setState(() {
           _user = user;
           _isLoading = false;
@@ -44,14 +49,30 @@ class _HomeState extends State<Home> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading user data: $e')),
-        );
+        // API'ye ulaşılamadı veya token geçersiz → login'e yönlendir
+        _forceLogout('Connection error. Please login again.');
       }
     }
+  }
+
+  void _forceLogout(String message) {
+    final box = Hive.box('login');
+    box.clear();
+    box.put('loginStatus', false);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+    );
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
   }
 
   void _onLogout() {

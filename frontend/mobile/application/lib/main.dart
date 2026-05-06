@@ -1,4 +1,5 @@
 import 'package:application/screens/loginPage.dart';
+import 'package:application/services/server_config.dart';
 import 'package:application/components/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -9,6 +10,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initHive();
 
+  // Her açılışta production URL'yi zorla yaz (eski Hive cache'i temizle)
+  await _migrateServerUrl();
+
   final Box _boxLogin = Hive.box("login");
   bool isLoggedIn = _boxLogin.get("loginStatus") ?? false;
 
@@ -18,6 +22,17 @@ void main() async {
       child: mainApp(isLoggedIn: isLoggedIn),
     ),
   );
+}
+
+/// Hive'daki eski/hatalı server URL'yi production IP ile sıfırlar.
+/// APK güncellendiğinde eski cached URL'ler sorun çıkarmasın diye zorunlu.
+Future<void> _migrateServerUrl() async {
+  const productionUrl = 'http://34.34.111.178:9001';
+  final currentUrl = ServerConfig.baseUrl;
+  if (currentUrl != productionUrl) {
+    print('[Migration] Eski URL tespit edildi: $currentUrl → $productionUrl güncelleniyor');
+    await ServerConfig.setBaseUrl(productionUrl);
+  }
 }
 
 Future<void> _initHive() async {
