@@ -111,5 +111,12 @@ namespace CleanArchitecture.WebApi.Controllers.v1
 
             return Ok(ApiResponse<int?>.Ok(sessionId, "Active session found"));
         }
+        [HttpGet("my-past-sessions")]
+        [Authorize(Roles = $"{nameof(Roles.Teacher)}, {nameof(Roles.AcademicStaff)}, {nameof(Roles.ItStaff)}")]
+        public async Task<ActionResult<ApiResponse<List<CleanArchitecture.Application.DTOs.Sessions.TeacherSessionDTO>>>> GetTeacherPastSessions()
+        {
+            var result = await Mediator.Send(new CleanArchitecture.Application.Features.Sessions.Queries.GetTeacherPastSessionsQuery());
+            return Ok(ApiResponse<List<CleanArchitecture.Application.DTOs.Sessions.TeacherSessionDTO>>.Ok(result));
+        }
     }
 }

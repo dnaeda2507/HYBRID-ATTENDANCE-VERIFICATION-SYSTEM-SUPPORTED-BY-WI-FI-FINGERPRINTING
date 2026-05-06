@@ -295,7 +295,7 @@ void _showServerUrlDialog(BuildContext context) {
   final controller = TextEditingController(text: ServerConfig.baseUrl);
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (dialogContext) => AlertDialog(
       title: const Text('Server Address'),
       content: TextField(
         controller: controller,
@@ -308,7 +308,7 @@ void _showServerUrlDialog(BuildContext context) {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(dialogContext),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -317,8 +317,8 @@ void _showServerUrlDialog(BuildContext context) {
             if (url.isNotEmpty) {
               await ServerConfig.setBaseUrl(url);
               ApiClient.instance.reload();
-              if (context.mounted) {
-                Navigator.pop(context);
+              if (mounted && context.mounted) {
+                Navigator.pop(dialogContext);
                 setState(() {}); // subtitle'ı güncelle
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Server address updated: $url')),

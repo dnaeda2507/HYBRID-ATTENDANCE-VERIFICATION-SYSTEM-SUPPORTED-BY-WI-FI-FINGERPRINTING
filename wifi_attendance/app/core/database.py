@@ -1,11 +1,9 @@
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.models.models import Base
-
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "mssql+pymssql://sqlserver:Attendance2026!@136.112.84.168:1433/CSEProjectTest"
+    DATABASE_URL: str = "mssql+pymssql://sa:YourPassword@localhost:1433/CSEProject"  # Dev fallback — prod .env override eder
     SECRET_KEY: str = "change-this-in-production"
     ALGORITHM: str = "HS256"
     INTERNAL_TOKEN: str = "wifi-ml-internal-secret-2024"
@@ -15,16 +13,10 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
-
 settings = Settings()
-
 engine = create_engine(settings.DATABASE_URL, echo=False)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def create_tables():
-    Base.metadata.create_all(bind=engine)
 
 
 def get_db():

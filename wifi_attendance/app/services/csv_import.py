@@ -93,14 +93,13 @@ def import_from_custom_csv(content: str, db: Session, scanned_by: str = None) ->
         notes = row.get('açıklama', '').strip()
         sample = WifiTrainingSample(
             classroom_id=classroom.id,
-            scanned_by=scanned_by,
             notes=f"{notes} | {rp_id}" if rp_id else notes or "CSV import",
         )
         db.add(sample)
         db.flush()
 
         for ap in aps:
-            db.add(WifiTrainingAccessPoint(sample_id=sample.id, **ap))
+            db.add(WifiTrainingAccessPoint(training_sample_id=sample.id, **ap))
 
         created_samples += 1
 
@@ -155,14 +154,13 @@ def import_from_simple_csv(content: str, db: Session, scanned_by: str = None) ->
 
         sample = WifiTrainingSample(
             classroom_id=classroom.id,
-            scanned_by=scanned_by,
             notes=f"CSV import - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}",
         )
         db.add(sample)
         db.flush()
 
         for ap in aps:
-            db.add(WifiTrainingAccessPoint(sample_id=sample.id, **ap))
+            db.add(WifiTrainingAccessPoint(training_sample_id=sample.id, **ap))
 
         created_samples += 1
 

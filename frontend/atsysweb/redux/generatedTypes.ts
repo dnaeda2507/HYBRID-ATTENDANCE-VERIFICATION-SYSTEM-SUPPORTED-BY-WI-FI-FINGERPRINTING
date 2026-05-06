@@ -803,6 +803,7 @@ export type AttendedUserDto = {
   id?: number;
   fullName?: string | null;
   markedAtUtc?: string | null;
+  isSuspicious?: boolean;
 };
 export type AttendedUserDtoListApiResponseRead = {
   success?: boolean;

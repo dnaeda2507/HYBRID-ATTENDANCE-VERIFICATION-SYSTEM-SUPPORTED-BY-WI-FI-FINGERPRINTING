@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using CleanArchitecture.Application.DTOs.Account;
 using CleanArchitecture.Core.DTOs.Account;
 using CleanArchitecture.Core.Enums;
@@ -76,7 +76,7 @@ namespace CleanArchitecture.WebApi.Controllers
             if (Request.Headers.ContainsKey("X-Forwarded-For"))
                 return Request.Headers["X-Forwarded-For"];
             else
-                return HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                return HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown";
         }
     }
 }

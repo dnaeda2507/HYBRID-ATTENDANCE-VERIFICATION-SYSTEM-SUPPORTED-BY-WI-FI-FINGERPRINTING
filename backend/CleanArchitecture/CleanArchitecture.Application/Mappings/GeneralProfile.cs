@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using AutoMapper;
 using CleanArchitecture.Application.DTOs.Attendances;
 using CleanArchitecture.Application.DTOs.Courses;
@@ -94,7 +94,8 @@ namespace CleanArchitecture.Core.Mappings
 
             CreateMap<Attendance, AttendedUserDTO>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Student.FirstName} {src.Student.LastName}"))
-                .ForMember(dest => dest.MarkedAtUtc, opt => opt.MapFrom(src => src.MarkedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")));
+                .ForMember(dest => dest.MarkedAtUtc, opt => opt.MapFrom(src => src.MarkedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")))
+                .ForMember(dest => dest.IsSuspicious, opt => opt.MapFrom(src => src.IsSuspicious));
         }
     }
 }

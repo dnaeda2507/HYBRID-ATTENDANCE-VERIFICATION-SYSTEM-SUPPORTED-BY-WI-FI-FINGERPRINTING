@@ -4,45 +4,52 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppSelector } from "@/redux/hooks";
 
-interface NavLink {
-  href: string;
-  label: string;
+interface MenuItem {
+  title: string;
+  path: string;
   roles?: string[];
+  disabled?: boolean;
 }
-
-const navLinks: NavLink[] = [
-  { href: '/', label: 'Home' },
-  { href: '/users', label: 'Users', roles: ['ItStaff', 'It Staff'] },
-  {
-    href: '/lectures',
-    label: 'Lectures',
-    roles: ['ItStaff', 'It Staff', 'Teacher', 'AcademicStaff', 'Academic Staff'],
-  },
-  {
-    href: '/courses',
-    label: 'Courses',
-    roles: ['ItStaff', 'It Staff', 'Teacher', 'AcademicStaff', 'Academic Staff'],
-  },
-  { href: '/attendance', label: 'Attendance' },
-  { href: '/settings', label: 'Settings' },
-];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const userRoles = useAppSelector((state) => state.auth.roles) ?? [];
 
-  const normalizeRole = (role: string) => role.replace(/\s+/g, '').toLowerCase();
+  const normalizeRole = (role: string) => role.replace(/\s+/g, "").toLowerCase();
 
-  const filteredLinks = navLinks.filter((link) => {
-    if (!link.roles) {
-      return true;
-    }
+  const menuItems: MenuItem[] = [
+    { title: "Home", path: "/" },
+    { title: "Users", path: "/users", roles: ["ItStaff", "It Staff"] },
+    {
+      title: "Lectures",
+      path: "/lectures",
+      roles: ["ItStaff", "It Staff", "Teacher", "AcademicStaff", "Academic Staff"],
+    },
+    {
+      title: "Courses",
+      path: "/courses",
+      roles: ["ItStaff", "It Staff", "Teacher", "AcademicStaff", "Academic Staff"],
+    },
+    {
+      title: "Attendance",
+      path: "/attendance",
+      roles: ["ItStaff", "It Staff", "Teacher", "AcademicStaff", "Academic Staff"],
+    },
+    {
+      title: "Past Sessions",
+      path: "/attendance/past-sessions",
+      roles: ["ItStaff", "It Staff", "Teacher", "AcademicStaff", "Academic Staff"],
+    },
+    { title: "Settings", path: "/settings" },
+  ];
 
+  const filteredItems = menuItems.filter((item) => {
+    if (!item.roles) return true;
     const normalizedUserRoles = userRoles.map(normalizeRole);
-    return link.roles.some((role) => normalizedUserRoles.includes(normalizeRole(role)));
+    return item.roles.some((role) => normalizedUserRoles.includes(normalizeRole(role)));
   });
 
   // Close menu when route changes
@@ -97,18 +104,18 @@ export default function Header() {
       {/* Mobile menu */}
       {isOpen && (
         <nav className="border-t border-gray-200">
-          {filteredLinks.map((link) => (
+          {filteredItems.map((item) => (
             <Link
-              key={link.href}
-              href={link.href}
+              key={item.path}
+              href={item.path}
               className={`block px-4 py-3 ${
-                pathname === link.href 
+                pathname === item.path 
                   ? 'bg-blue-50 text-blue-700 font-medium'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
               onClick={() => setIsOpen(false)}
             >
-              {link.label}
+              {item.title}
             </Link>
           ))}
         </nav>

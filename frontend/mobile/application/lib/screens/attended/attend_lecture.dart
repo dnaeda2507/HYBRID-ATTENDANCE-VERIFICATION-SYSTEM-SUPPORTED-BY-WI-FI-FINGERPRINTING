@@ -19,6 +19,7 @@ class AttendedLecture extends StatefulWidget {
 
 class _AttendedLectureState extends State<AttendedLecture> {
   bool _wifiLoading = false;
+  final AttendanceService _attendanceService = AttendanceService();
 
   void _showSuccessDialog(String message) {
     showDialog(
@@ -48,28 +49,42 @@ class _AttendedLectureState extends State<AttendedLecture> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Enter Attendance Password"),
-          content: TextField(controller: passwordController),
+          title: const Text("Yoklama Şifresini Gir"),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(hintText: "Şifre"),
+          ),
           actions: [
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
-                final input = passwordController.text.trim();
-                if (input.isEmpty || !input.contains(':')) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid input format")));
+                Navigator.of(dialogContext).pop();
+                final password = passwordController.text.trim();
+                if (password.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şifre boş olamaz")));
                   return;
                 }
-                final parts = input.split(':');
-                final sessionId = int.tryParse(parts[0]) ?? 0;
-                final token = parts[1];
-                final response = await AttendanceService().sendAttendance(sessionId: sessionId, tokenFromQR: token);
-                if (response.data['success'] == true) {
-                  _showSuccessDialog(response.data['message']);
-                } else {
-                  _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
+                try {
+                  final sessionId = await _attendanceService.getMyActiveSessionId();
+                  if (sessionId == null) {
+                    _showErrorDialog('Aktif yoklama oturumu bulunamadı');
+                    return;
+                  }
+
+                  final response = await _attendanceService.markAttendanceByPassword(
+                    sessionId: sessionId,
+                    password: password,
+                  );
+                  if (response.data['success'] == true) {
+                    _showSuccessDialog("Şifre ile yoklama başarılı!");
+                  } else {
+                    _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
+                  }
+                } catch (e) {
+                  _showErrorDialog('Hata: $e');
                 }
               },
-              child: const Text("OK"),
+              child: const Text("Gönder"),
             ),
           ],
         );
@@ -79,32 +94,50 @@ class _AttendedLectureState extends State<AttendedLecture> {
 
   void _openQRSystem() async {
     final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const QRViewPage()));
-    if (result != null && result.contains(':')) {
-      final parts = result.split(':');
-      final sessionId = int.tryParse(parts[0]);
-      final token = parts[1];
-      if (sessionId != null && token.isNotEmpty) {
-        final response = await AttendanceService().sendAttendance(sessionId: sessionId, tokenFromQR: token);
-        if (response.data['success'] == true) {
-          _showSuccessDialog(response.data['message']);
-        } else {
-          _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
-        }
+    if (result == null) return;
+
+    final parsed = _attendanceService.parseQrPayload(result.toString());
+    if (parsed == null) {
+      _showErrorDialog('QR kod formati gecersiz');
+      return;
+    }
+
+    try {
+      final response = await _attendanceService.markAttendanceByQR(
+        sessionId: parsed.sessionId,
+        qrToken: parsed.token,
+      );
+      if (response.data['success'] == true) {
+        _showSuccessDialog("QR ile yoklama başarılı!");
+      } else {
+        _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
       }
+    } catch (e) {
+      _showErrorDialog('Hata: $e');
     }
   }
 
   Future<void> _wifiCheckIn() async {
     setState(() => _wifiLoading = true);
     try {
-      final result = await WifiService().checkIn();
-      if (result.success) {
-        _showSuccessDialog(result.message);
+      // Önce active session'ı bul
+      final sessionId = await WifiService().findActiveSessionId();
+      if (sessionId == null) {
+        _showErrorDialog('Aktif yoklama oturumu bulunamadı');
+        return;
+      }
+
+      // WiFi ile yoklama yap
+      final response = await _attendanceService.markAttendanceByWiFi(
+        sessionId: sessionId,
+      );
+      if (response.data['success'] == true) {
+        _showSuccessDialog("WiFi ile yoklama başarılı!");
       } else {
-        _showErrorDialog(result.message);
+        _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
       }
     } catch (e) {
-      _showErrorDialog('Beklenmeyen hata: $e');
+      _showErrorDialog('Hata: $e');
     } finally {
       setState(() => _wifiLoading = false);
     }

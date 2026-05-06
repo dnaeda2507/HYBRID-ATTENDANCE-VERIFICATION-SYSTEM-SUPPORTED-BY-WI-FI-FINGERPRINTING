@@ -99,7 +99,9 @@ class WifiService {
           'sessionId': sessionId,
           'scannedAtUtc': DateTime.now().toUtc().toIso8601String(),
           'accessPoints': aps
-              .where((ap) => ap.level != 0)
+              .where((ap) => 
+                ap.level != 0 && 
+                (ap.ssid.toLowerCase().contains("eduroam")))
               .take(20)
               .map((ap) => {'bssid': ap.bssid, 'rssi': ap.level})
               .toList(),
