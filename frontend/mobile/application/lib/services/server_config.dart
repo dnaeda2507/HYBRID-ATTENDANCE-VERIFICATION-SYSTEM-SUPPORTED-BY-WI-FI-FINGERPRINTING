@@ -5,7 +5,7 @@ class ServerConfig {
   static const _key = 'server_url';
   // Development: localhost:5000 (iOS sim) veya 10.0.2.2:5000 (Android emulator)
   // Production: http://34.38.191.19:9001
-  static const _defaultUrl = 'http://localhost:5000';
+  static const _defaultUrl = 'http://34.34.111.178:9001';
 
   static String get baseUrl {
     final box = Hive.box(_boxName);
