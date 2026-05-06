@@ -30,6 +30,11 @@ services:
       retries: 10
       start_period: 60s
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ── ASP.NET Core Backend ────────────────────────────────────
   backend:
@@ -60,6 +65,11 @@ services:
       sqlserver:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ── Python FastAPI ML Service ───────────────────────────────
   ml-service:
@@ -78,6 +88,11 @@ services:
       sqlserver:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ── Next.js Web Frontend ────────────────────────────────────
   frontend:
@@ -92,6 +107,11 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   sqlserver_data:
