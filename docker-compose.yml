@@ -79,8 +79,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: >-
-        mssql+pymssql://sa:${DB_PASSWORD}@sqlserver:1433/${DB_NAME:-CSEProject}
+      DB_SERVER: sqlserver
+      DB_PORT: "1433"
+      DB_NAME: ${DB_NAME:-CSEProject}
+      DB_USER: sa
+      DB_PASSWORD: ${DB_PASSWORD}
       SECRET_KEY: ${JWT_KEY}
       INTERNAL_TOKEN: ${INTERNAL_TOKEN}
       CS_BACKEND_URL: http://backend:80
