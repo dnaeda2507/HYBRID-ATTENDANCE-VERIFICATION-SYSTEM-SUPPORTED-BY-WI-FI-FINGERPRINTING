@@ -30,7 +30,7 @@ export default function Home() {
               Student Attendance System
             </p>
             <p className="text-xl md:text-2xl font-bold text-black">
-              Developed by Group 20
+              Developed by Group 5
             </p>
           </div>
         </div>
