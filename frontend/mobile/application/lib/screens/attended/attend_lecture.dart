@@ -52,20 +52,32 @@ class _AttendedLectureState extends State<AttendedLecture> {
           title: const Text("Yoklama Şifresini Gir"),
           content: TextField(
             controller: passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(hintText: "Şifre"),
+            decoration: const InputDecoration(hintText: "Örn: AB3XY7 veya 42:AB3XY7"),
           ),
           actions: [
             TextButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
-                final password = passwordController.text.trim();
-                if (password.isEmpty) {
+                String input = passwordController.text.trim();
+                if (input.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şifre boş olamaz")));
                   return;
                 }
+
+                // "TOKEN" veya "sessionId:TOKEN" formatını kabul et
+                String password = input;
+                int? parsedSessionId;
+                if (input.contains(':')) {
+                  final parts = input.split(':');
+                  final maybeId = int.tryParse(parts[0].trim());
+                  if (maybeId != null && parts.length >= 2) {
+                    parsedSessionId = maybeId;
+                    password = parts.sublist(1).join(':').trim();
+                  }
+                }
+
                 try {
-                  final sessionId = await _attendanceService.getMyActiveSessionId();
+                  final sessionId = parsedSessionId ?? await _attendanceService.getMyActiveSessionId();
                   if (sessionId == null) {
                     _showErrorDialog('Aktif yoklama oturumu bulunamadı');
                     return;
@@ -120,21 +132,12 @@ class _AttendedLectureState extends State<AttendedLecture> {
   Future<void> _wifiCheckIn() async {
     setState(() => _wifiLoading = true);
     try {
-      // Önce active session'ı bul
-      final sessionId = await WifiService().findActiveSessionId();
-      if (sessionId == null) {
-        _showErrorDialog('Aktif yoklama oturumu bulunamadı');
-        return;
-      }
-
-      // WiFi ile yoklama yap
-      final response = await _attendanceService.markAttendanceByWiFi(
-        sessionId: sessionId,
-      );
-      if (response.data['success'] == true) {
-        _showSuccessDialog("WiFi ile yoklama başarılı!");
+      // WiFi tara → FastAPI lokasyon tahmin → eşleşirse yoklama al
+      final result = await WifiService().checkIn();
+      if (result.success) {
+        _showSuccessDialog(result.message);
       } else {
-        _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
+        _showErrorDialog(result.message);
       }
     } catch (e) {
       _showErrorDialog('Hata: $e');

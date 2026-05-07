@@ -34,12 +34,12 @@ const Sidebar = () => {
     {
       title: "Attendance",
       path: "/attendance",
-      roles: ["ItStaff", "Teacher", "AcademicStaff"],
+      roles: ["Teacher", "AcademicStaff"],
     },
     {
       title: "Past Sessions",
       path: "/attendance/past-sessions",
-      roles: ["ItStaff", "Teacher", "AcademicStaff"],
+      roles: ["Teacher", "AcademicStaff"],
     },
     { title: "Settings", path: "/settings" },
   ];

@@ -131,18 +131,36 @@ class _AttendedPageState extends State<AttendedPage> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text("Enter Attendance Password"),
-          content: TextField(controller: passwordController),
+          content: TextField(
+            controller: passwordController,
+            decoration: const InputDecoration(
+              hintText: "e.g. AB3XY7 or 42:AB3XY7",
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
-                final password = passwordController.text.trim();
-                if (password.isEmpty) {
+                String input = passwordController.text.trim();
+                if (input.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password cannot be empty")));
                   return;
                 }
+
+                // Accept both "TOKEN" and "sessionId:TOKEN" formats
+                String password = input;
+                int? parsedSessionId;
+                if (input.contains(':')) {
+                  final parts = input.split(':');
+                  final maybeId = int.tryParse(parts[0].trim());
+                  if (maybeId != null && parts.length >= 2) {
+                    parsedSessionId = maybeId;
+                    password = parts.sublist(1).join(':').trim();
+                  }
+                }
+
                 try {
-                  final sessionId = await _attendanceService.getMyActiveSessionId();
+                  final sessionId = parsedSessionId ?? await _attendanceService.getMyActiveSessionId();
                   if (sessionId == null) {
                     _showErrorDialog(context, "No active attendance session found");
                     return;

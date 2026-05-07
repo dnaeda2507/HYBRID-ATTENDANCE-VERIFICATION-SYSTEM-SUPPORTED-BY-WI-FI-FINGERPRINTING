@@ -84,12 +84,21 @@ namespace CleanArchitecture.Application.Features.Attendances.Commands
 
             var nowUtc = DateTime.Now;
             var leftTimeToCourseEnd = nowUtc.Date + course.EndTime - nowUtc;
+            var calculatedEndTime = nowUtc.Add(leftTimeToCourseEnd);
+            
+            // Eğer dersin programdaki bitiş süresi şu anki zamandan gerideyse (yani ders saati geçmişse),
+            // yoklama oturumunu varsayılan olarak şu andan itibaren 2 saat sonrasına kadar açık tut.
+            if (calculatedEndTime <= nowUtc)
+            {
+                calculatedEndTime = nowUtc.AddHours(2);
+            }
+
             var session = new Session
             {
                 CourseId = course.Id,
                 Date = nowUtc,
                 StartTime = request.StartTime ?? TimeOnly.FromDateTime(nowUtc),
-                EndTime = request.EndTime ?? TimeOnly.FromDateTime(nowUtc.Add(leftTimeToCourseEnd)),
+                EndTime = request.EndTime ?? TimeOnly.FromDateTime(calculatedEndTime),
                 Token = token,
                 Status = SessionStatus.Open
             };
