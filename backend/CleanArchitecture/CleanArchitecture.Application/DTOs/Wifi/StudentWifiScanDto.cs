@@ -13,4 +13,12 @@ namespace CleanArchitecture.Application.DTOs.Wifi
         public double? ConfidenceScore { get; set; }
         public int? PredictedClassroomId { get; set; }
     }
+
+    public class WifiScanResultDto
+    {
+        public int ScanId { get; set; }
+        public bool AttendanceMarked { get; set; }
+        public string Message { get; set; }
+        public double Confidence { get; set; }
+    }
 }

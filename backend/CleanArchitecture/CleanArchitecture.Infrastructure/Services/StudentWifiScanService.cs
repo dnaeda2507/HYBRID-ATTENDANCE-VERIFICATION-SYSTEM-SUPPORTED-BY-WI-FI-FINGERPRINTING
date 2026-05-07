@@ -52,11 +52,19 @@ namespace CleanArchitecture.Infrastructure.Services
             _sessionRepo = sessionRepo;
         }
 
-        public async Task<int> CreateAsync(StudentWifiScanCreateDto dto)
+        public async Task<WifiScanResultDto> CreateAsync(StudentWifiScanCreateDto dto)
         {
             // 1. Scan'i DB'ye kaydet
             var entity = _mapper.Map<StudentWifiScan>(dto);
             var created = await _repo.AddAsync(entity);
+
+            var result = new WifiScanResultDto
+            {
+                ScanId = created.Id,
+                AttendanceMarked = false,
+                Message = "WiFi taraması kaydedildi ancak derslikte bulunulamadı.",
+                Confidence = 0
+            };
 
             // 2. FastAPI'ye tahmin isteği at
             try
@@ -86,31 +94,40 @@ namespace CleanArchitecture.Infrastructure.Services
                             await _mediator.Send(new MarkAttendanceCommand
                             {
                                 SessionId = dto.SessionId,
-                                Method = (AttendanceMethod)2,  // WiFi = 2
+                                Method = (AttendanceMethod)2,
                                 IsSuspicious = prediction.IsSuspicious
                             });
+
+                            result.AttendanceMarked = true;
+                            result.Message = $"Yoklama alındı ✓ ({prediction.ClassroomName}, %{prediction.Confidence * 100:F0} güven)";
+                            result.Confidence = prediction.Confidence;
                         }
                         else
                         {
                             _logger.LogWarning(
                                 "WiFi tahmin başarılı FAKAT lokasyon UYUŞMUYOR. Öğrencinin Yoklaması REDDEDİLDİ. Beklenen: {ExpectedClassroom}, Bulunan: {PredictedClassroom}",
                                 session.Course.Location, prediction.ClassroomName);
+                            result.Message = $"Derslikte bulunulamadı. Beklenen: {session.Course.Location}, Bulunan: {prediction.ClassroomName}";
+                            result.Confidence = prediction.Confidence;
                         }
                     }
                 }
                 else
                 {
-                    _logger.LogInformation(
-                        "WiFi tahmin başarısız veya eşleşmedi. Confidence={Confidence}", prediction?.Confidence);
+                    var conf = prediction?.Confidence ?? 0;
+                    _logger.LogInformation("WiFi tahmin başarısız veya eşleşmedi. Confidence={Confidence}", conf);
+                    result.Message = $"Derslikte bulunulamadı. (güven: %{conf * 100:F0})";
+                    result.Confidence = conf;
                 }
             }
             catch (Exception ex)
             {
                 // Tahmin veya yoklama hatası scan kaydını engellemez
                 _logger.LogError(ex, "WiFi tahmin/yoklama hatası");
+                result.Message = "WiFi tahmin servisi hatası: " + ex.Message;
             }
 
-            return created.Id;
+            return result;
         }
 
         public async Task<StudentWifiScanDto> GetByIdAsync(int id)

@@ -89,18 +89,18 @@ class WifiService {
       return AttendanceResult(success: false, message: 'Hiç WiFi ağı bulunamadı');
     }
 
-    // 4. C# backend'e gönder
+    // 4. C# backend'e gönder — yanıt, ML modelin gerçekte yoklama alıp almadığını söyler
     try {
       final token = await _getToken();
-      await _dio.post(
+      final response = await _dio.post(
         '/api/Wifi/scans',
         data: {
           'studentId': null,
           'sessionId': sessionId,
           'scannedAtUtc': DateTime.now().toUtc().toIso8601String(),
           'accessPoints': aps
-              .where((ap) => 
-                ap.level != 0 && 
+              .where((ap) =>
+                ap.level != 0 &&
                 (ap.ssid.toLowerCase().contains("eduroam")))
               .take(20)
               .map((ap) => {'bssid': ap.bssid, 'rssi': ap.level})
@@ -109,7 +109,15 @@ class WifiService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      return AttendanceResult(success: true, message: 'Yoklama alındı ✓');
+      final data = response.data;
+      final attendanceMarked = data?['attendanceMarked'] as bool? ?? false;
+      final message = data?['message'] as String? ?? (attendanceMarked ? 'Yoklama alındı ✓' : 'Derslikte bulunulamadı');
+
+      return AttendanceResult(
+        success: attendanceMarked,
+        message: message,
+        confidence: (data?['confidence'] as num?)?.toDouble() ?? 0.0,
+      );
     } on DioException catch (e) {
       final detail = e.response?.data?['errors']?.first ?? e.message;
       return AttendanceResult(success: false, message: detail.toString());

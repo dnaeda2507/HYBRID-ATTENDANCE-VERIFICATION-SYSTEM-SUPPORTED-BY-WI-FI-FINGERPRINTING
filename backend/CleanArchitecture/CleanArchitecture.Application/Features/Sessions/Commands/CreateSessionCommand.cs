@@ -82,22 +82,24 @@ namespace CleanArchitecture.Application.Features.Attendances.Commands
                 .GetQueryableAsync()
                 .AnyAsync(s => s.Token == token && s.Status == SessionStatus.Open, ct));
 
-            var nowUtc = DateTime.Now;
-            var leftTimeToCourseEnd = nowUtc.Date + course.EndTime - nowUtc;
-            var calculatedEndTime = nowUtc.Add(leftTimeToCourseEnd);
-            
+            // Cloud server runs UTC; use Turkey local time (UTC+3) so stored times
+            // stay consistent with what IsOpen() and the teacher/student see.
+            var now = DateTime.UtcNow.AddHours(3);
+            var leftTimeToCourseEnd = now.Date + course.EndTime - now;
+            var calculatedEndTime = now.Add(leftTimeToCourseEnd);
+
             // Eğer dersin programdaki bitiş süresi şu anki zamandan gerideyse (yani ders saati geçmişse),
             // yoklama oturumunu varsayılan olarak şu andan itibaren 2 saat sonrasına kadar açık tut.
-            if (calculatedEndTime <= nowUtc)
+            if (calculatedEndTime <= now)
             {
-                calculatedEndTime = nowUtc.AddHours(2);
+                calculatedEndTime = now.AddHours(2);
             }
 
             var session = new Session
             {
                 CourseId = course.Id,
-                Date = nowUtc,
-                StartTime = request.StartTime ?? TimeOnly.FromDateTime(nowUtc),
+                Date = now,
+                StartTime = request.StartTime ?? TimeOnly.FromDateTime(now),
                 EndTime = request.EndTime ?? TimeOnly.FromDateTime(calculatedEndTime),
                 Token = token,
                 Status = SessionStatus.Open

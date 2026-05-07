@@ -22,7 +22,8 @@ namespace CleanArchitecture.Core.Entities.Sessions
 
         public bool IsOpen()
         {
-            var now = DateTime.Now;
+            // Cloud server runs UTC; stored times are Turkey local (UTC+3)
+            var now = DateTime.UtcNow.AddHours(3);
 
             var sessionDate = Date.Date;
 
