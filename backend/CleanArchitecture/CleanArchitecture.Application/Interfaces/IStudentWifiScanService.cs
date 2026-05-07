@@ -5,7 +5,7 @@ namespace CleanArchitecture.Core.Interfaces
 {
     public interface IStudentWifiScanService
     {
-        Task<int> CreateAsync(StudentWifiScanCreateDto dto);
+        Task<WifiScanResultDto> CreateAsync(StudentWifiScanCreateDto dto);
         Task<StudentWifiScanDto> GetByIdAsync(int id);
     }
 }
