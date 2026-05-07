@@ -24,7 +24,7 @@ import {
   usePostApiVbyVersionCourseCreateMutation,
   usePutApiVbyVersionCourseUpdateMutation,
   CreateCourseCommand,
-  CourseDetailDto,
+  CourseDetailDtoRead,
   UpdateCourseCommand,
   LectureDto,
   UserListingDto,
@@ -66,7 +66,7 @@ const AddOrUpdateCourseModal: React.FC<AddOrUpdateCourseModalProps> = ({
   const [createCourse] = usePostApiVbyVersionCourseCreateMutation();
   const [updateCourse] = usePutApiVbyVersionCourseUpdateMutation();
 
-  const [course, setCourse] = useState<CourseDetailDto | null>(null);
+  const [course, setCourse] = useState<CourseDetailDtoRead | null>(null);
 
   const apiVersion = process.env.NEXT_PUBLIC_API_VERSION as string;
 
@@ -196,8 +196,8 @@ const AddOrUpdateCourseModal: React.FC<AddOrUpdateCourseModalProps> = ({
         lecture: undefined,
         teacher: undefined,
         department: undefined,
-        duration: { ticks: 0 },
-        startTime: { ticks: 0 },
+        duration: { hours: 0, minutes: 0 },
+        startTime: { hours: 0, minutes: 0 },
         dayOfWeek: 0,
         location: "",
         courseStaffs: [],
@@ -994,40 +994,26 @@ const AddOrUpdateCourseModal: React.FC<AddOrUpdateCourseModalProps> = ({
                           }}
                         />
                       </div>
-                      {/* End Time — stored as Duration = EndTime - StartTime */}
+                      {/* Duration */}
                       <div className="w-full md:w-1/2 px-3">
                         <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
-                          End Time
+                          Duration
                         </label>
                         <input
                           type="time"
                           step={60}
                           className="appearance-none block w-full bg-gray-50 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                          value={formatStartTime((() => {
-                            const sh = course?.startTime?.hours ?? 0;
-                            const sm = course?.startTime?.minutes ?? 0;
-                            const dh = course?.duration?.hours ?? 0;
-                            const dm = course?.duration?.minutes ?? 0;
-                            const totalMins = sh * 60 + sm + dh * 60 + dm;
-                            return { hours: Math.floor(totalMins / 60) % 24, minutes: totalMins % 60 };
-                          })())}
+                          value={formatStartTime(course?.duration)}
                           onChange={(e) => {
-                            const [eh, em] = e.target.value.split(":").map(Number);
-                            setCourse((prev) => {
-                              const sh = prev?.startTime?.hours ?? 0;
-                              const sm = prev?.startTime?.minutes ?? 0;
-                              const endMins = eh * 60 + em;
-                              const startMins = sh * 60 + sm;
-                              const durationMins = Math.max(0, endMins - startMins);
-                              return {
-                                ...prev!,
-                                duration: {
-                                  ...prev!.duration,
-                                  hours: Math.floor(durationMins / 60),
-                                  minutes: durationMins % 60,
-                                },
-                              };
-                            });
+                            const [h, m] = e.target.value.split(":");
+                            setCourse((prev) => ({
+                              ...prev!,
+                              duration: {
+                                ...prev!.duration,
+                                hours: parseInt(h, 10),
+                                minutes: parseInt(m, 10),
+                              },
+                            }));
                           }}
                         />
                       </div>
