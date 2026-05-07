@@ -994,26 +994,40 @@ const AddOrUpdateCourseModal: React.FC<AddOrUpdateCourseModalProps> = ({
                           }}
                         />
                       </div>
-                      {/* Duration */}
+                      {/* End Time — stored as Duration = EndTime - StartTime */}
                       <div className="w-full md:w-1/2 px-3">
                         <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
-                          Duration
+                          End Time
                         </label>
                         <input
                           type="time"
                           step={60}
                           className="appearance-none block w-full bg-gray-50 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                          value={formatStartTime(course?.duration)}
+                          value={formatStartTime((() => {
+                            const sh = course?.startTime?.hours ?? 0;
+                            const sm = course?.startTime?.minutes ?? 0;
+                            const dh = course?.duration?.hours ?? 0;
+                            const dm = course?.duration?.minutes ?? 0;
+                            const totalMins = sh * 60 + sm + dh * 60 + dm;
+                            return { hours: Math.floor(totalMins / 60) % 24, minutes: totalMins % 60 };
+                          })())}
                           onChange={(e) => {
-                            const [h, m] = e.target.value.split(":");
-                            setCourse((prev) => ({
-                              ...prev!,
-                              duration: {
-                                ...prev!.duration,
-                                hours: parseInt(h, 10),
-                                minutes: parseInt(m, 10),
-                              },
-                            }));
+                            const [eh, em] = e.target.value.split(":").map(Number);
+                            setCourse((prev) => {
+                              const sh = prev?.startTime?.hours ?? 0;
+                              const sm = prev?.startTime?.minutes ?? 0;
+                              const endMins = eh * 60 + em;
+                              const startMins = sh * 60 + sm;
+                              const durationMins = Math.max(0, endMins - startMins);
+                              return {
+                                ...prev!,
+                                duration: {
+                                  ...prev!.duration,
+                                  hours: Math.floor(durationMins / 60),
+                                  minutes: durationMins % 60,
+                                },
+                              };
+                            });
                           }}
                         />
                       </div>
