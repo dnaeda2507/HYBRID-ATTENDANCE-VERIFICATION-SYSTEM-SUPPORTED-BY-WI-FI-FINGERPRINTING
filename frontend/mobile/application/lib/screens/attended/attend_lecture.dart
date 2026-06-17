@@ -120,21 +120,11 @@ class _AttendedLectureState extends State<AttendedLecture> {
   Future<void> _wifiCheckIn() async {
     setState(() => _wifiLoading = true);
     try {
-      // Önce active session'ı bul
-      final sessionId = await WifiService().findActiveSessionId();
-      if (sessionId == null) {
-        _showErrorDialog('Aktif yoklama oturumu bulunamadı');
-        return;
-      }
-
-      // WiFi ile yoklama yap
-      final response = await _attendanceService.markAttendanceByWiFi(
-        sessionId: sessionId,
-      );
-      if (response.data['success'] == true) {
-        _showSuccessDialog("WiFi ile yoklama başarılı!");
+      final result = await WifiService().checkIn();
+      if (result.success) {
+        _showSuccessDialog(result.message);
       } else {
-        _showErrorDialog(response.data['message'] ?? 'Hata oluştu');
+        _showErrorDialog(result.message);
       }
     } catch (e) {
       _showErrorDialog('Hata: $e');

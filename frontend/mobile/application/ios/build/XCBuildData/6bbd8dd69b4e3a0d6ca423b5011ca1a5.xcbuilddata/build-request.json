@@ -1,0 +1,169 @@
+{
+  "buildCommand" : {
+    "command" : "prepareForIndexing",
+    "enableIndexBuildArena" : false,
+    "targets" : null
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e989da425bb6d6d5d8dbb95e4afffb82217"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98dd3a6a519ed4181bf31ea6bc1f18ebc5"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9801af34ddea6be97d757786022edb34b1"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98d3c8dfff2c580c352f83d3850ad17775"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98bb3e3ebadbb0b9a8a4f20f605e3cb3cb"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9832e568d1d64358cf46b257009674a4a8"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9896cd7ae8c7639d8f9257b5465384bf6b"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98e474ad9306e7b8df54bd6c4337ea1912"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98a435583ab4c2282d404489aa813de99b"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98718890dfdac589615663a02d43d9af3e"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e981a9fac6eb9c80f8eed49fda0531af6a4"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e986a3314f48204dcd3250955aef3b5b25c"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98ce8e18cb7dd8a33e75f807c37bedf494"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e986aa58d33b8894c02f49ea32c3da727fe"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9841a9e73b2585cb546680d93608f0e002"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98312b4bc59bbbe2c06c205bf4da6737f5"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98483832d3c820398e9d40e1a6904b03fe"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98f10882e1684b8a3dfdec597bc0a47af3"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98ad53226b339581a6725de188f2c8f823"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98d41ce0bf2141365ff0288286787936d9"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98583f48d08e567205bb589ccf43c23e63"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e987cb9c58d33d05677fb576674bac57313"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98a0220561f537715e864e45aed9ae8b8b"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e981f000f066404b97b12e9c4ca84d38d0f"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98082dc85da1fc941e5234c7cc1f11b27d"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98b54f2bdfc3ce691d3ad04972a364d2a5"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98e39aae0c91f0bdebfb6ac42304942a79"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e980062393f91a1d2d94e3e5ed3a5aa5da9"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98c9e4d77647dbd2f60d4df5fb297112b6"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98a5ae7244e41cc249cf7186dbb9962ecb"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e987b6c2f882d164ef4f3c76673562685a1"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9830037b09fee48cfce1f8562d753688c8"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e987ea64ee8d53085bf9edd1a57aaf8cbb5"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98ef10255b706f98e1e88fae00855b0968"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9802f35ab680609a626ebd2ddd692a3822"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98848ff9cf74c635f5324731538a1c853f"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98de00f90750e7753637464fe34137709d"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9828cab1f188854e0a973e6ff6905c5ffe"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98e0be3b0d5ad56f1985578b1f97431765"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98903e66fa03d6d27edaa18126a82c20fd"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e9891b3b8cc56823cdea4b418e009a423b2"
+    },
+    {
+      "guid" : "bfdfe7dc352907fc980b868725387e98c7a63e0ca7bcb3b7739ab14b84318430"
+    }
+  ],
+  "containerPath" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/Pods/Pods.xcodeproj",
+  "continueBuildingAfterErrors" : true,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "build",
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "",
+      "buildProductsPath" : "",
+      "derivedDataPath" : "/Users/dilanguler/Library/Developer/Xcode/DerivedData",
+      "indexDataStoreFolderPath" : "/Users/dilanguler/Library/Developer/Xcode/DerivedData/Pods-cgqjexfifzmphgewtnmxyceoouxw/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/dilanguler/Library/Developer/Xcode/DerivedData/Pods-cgqjexfifzmphgewtnmxyceoouxw/Index.noindex/PrecompiledHeaders",
+      "pchPath" : ""
+    },
+    "configurationName" : "Release",
+    "overrides" : {
+      "synthesized" : {
+        "table" : {
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "NO",
+          "ONLY_ACTIVE_ARCH" : "YES"
+        }
+      }
+    }
+  },
+  "qos" : "default",
+  "schemeCommand" : "launch",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : true,
+  "useImplicitDependencies" : false,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : false
+}

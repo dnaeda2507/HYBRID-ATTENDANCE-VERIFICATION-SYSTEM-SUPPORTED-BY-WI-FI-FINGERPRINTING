@@ -1,0 +1,23 @@
+{
+  "version": 0,
+  "use-external-names": false,
+  "case-sensitive": false,
+  "roots": [{
+    "type": "directory",
+    "name": "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Release-iphoneos/wifi_scan/wifi_scan.framework/Modules",
+    "contents": [{
+      "type": "file",
+      "name": "module.modulemap",
+      "external-contents": "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/unextended-module.modulemap",
+    }]
+    },
+    {
+    "type": "directory",
+    "name": "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Release-iphoneos/wifi_scan/wifi_scan.framework/Headers",
+    "contents": [{
+      "type": "file",
+      "name": "wifi_scan-Swift.h",
+      "external-contents": "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/unextended-interface-header.h",
+    }]
+  }]
+}

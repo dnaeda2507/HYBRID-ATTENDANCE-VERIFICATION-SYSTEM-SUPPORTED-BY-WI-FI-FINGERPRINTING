@@ -85,7 +85,14 @@ class _LoginState extends State<Login> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login failed.")),
+          SnackBar(
+            content: Text(
+              'Giriş başarısız. Sunucu adresini kontrol edin '
+              '(Android emulator: http://10.0.2.2:9001). '
+              'Settings > Server Address',
+            ),
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } catch (e) {

@@ -1,0 +1,16 @@
+{
+  "" : {
+    "const-values" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary.swiftconstvalues",
+    "dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary.d",
+    "diagnostics" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary.dia",
+    "emit-module-dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary-emit-module.dia",
+    "pch" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/wifi_scan-primary.swiftdeps"
+  },
+  "/Users/dilanguler/.pub-cache/hosted/pub.dev/wifi_scan-0.4.1+2/ios/Classes/SwiftWifiScanPlugin.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/SwiftWifiScanPlugin.o",
+    "llvm-bc" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/SwiftWifiScanPlugin.bc",
+    "object" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/wifi_scan.build/Objects-normal/arm64/SwiftWifiScanPlugin.o"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "" : {
+    "const-values" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary.swiftconstvalues",
+    "dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary.d",
+    "diagnostics" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary.dia",
+    "emit-module-dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary-emit-module.dia",
+    "pch" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/shared_preferences_foundation-primary.swiftdeps"
+  },
+  "/Users/dilanguler/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.5.4/darwin/shared_preferences_foundation/Sources/shared_preferences_foundation/SharedPreferencesPlugin.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/SharedPreferencesPlugin.o",
+    "llvm-bc" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/SharedPreferencesPlugin.bc",
+    "object" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/SharedPreferencesPlugin.o"
+  },
+  "/Users/dilanguler/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.5.4/darwin/shared_preferences_foundation/Sources/shared_preferences_foundation/messages.g.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/messages.g.o",
+    "llvm-bc" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/messages.g.bc",
+    "object" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/shared_preferences_foundation.build/Objects-normal/arm64/messages.g.o"
+  }
+}

@@ -45,8 +45,8 @@ services:
         Server=sqlserver,1433;Database=${DB_NAME:-CSEProject};
         User=sa;Password=${DB_PASSWORD};TrustServerCertificate=True
       JWTSettings__Key: ${JWT_KEY}
-      JWTSettings__Issuer: ${JWT_ISSUER:-AttendanceSystem}
-      JWTSettings__Audience: ${JWT_AUDIENCE:-AttendanceSystemUsers}
+      JWTSettings__Issuer: ${JWT_ISSUER:-CoreIdentity}
+      JWTSettings__Audience: ${JWT_AUDIENCE:-CoreIdentityUser}
       JWTSettings__DurationInMinutes: ${JWT_DURATION:-3600}
       FastAPI__BaseUrl: http://ml-service:8000
       FastAPI__InternalToken: ${INTERNAL_TOKEN}
@@ -72,7 +72,10 @@ services:
       DATABASE_URL: >-
         mssql+pymssql://sa:${DB_PASSWORD}@sqlserver:1433/${DB_NAME:-CSEProject}
       SECRET_KEY: ${JWT_KEY}
+      JWT_ISSUER: ${JWT_ISSUER:-CoreIdentity}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-CoreIdentityUser}
       INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       CS_BACKEND_URL: http://backend:80
     depends_on:
       sqlserver:

@@ -1,0 +1,4 @@
+
+module wifi_scan.__Swift {
+  exclude header "wifi_scan-Swift.h"
+}

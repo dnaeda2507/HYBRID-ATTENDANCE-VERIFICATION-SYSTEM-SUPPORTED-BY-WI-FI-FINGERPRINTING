@@ -1,5 +1,6 @@
 import 'package:application/screens/loginPage.dart';
 import 'package:application/components/theme_provider.dart';
+import 'package:application/services/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart'; 
@@ -25,6 +26,7 @@ Future<void> _initHive() async {
   await Hive.openBox("login");
   await Hive.openBox("accounts");
   await Hive.openBox("settings");
+  ApiClient.instance.reload();
 }
 
 class mainApp extends StatefulWidget {

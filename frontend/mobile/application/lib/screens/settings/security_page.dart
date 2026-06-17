@@ -302,7 +302,7 @@ void _showServerUrlDialog(BuildContext context) {
         keyboardType: TextInputType.url,
         decoration: const InputDecoration(
           labelText: 'Base URL',
-          hintText: 'http://34.90.123.45:9001',
+          hintText: 'http://10.0.2.2:9001 (emulator) veya http://192.168.x.x:9001',
           border: OutlineInputBorder(),
         ),
       ),

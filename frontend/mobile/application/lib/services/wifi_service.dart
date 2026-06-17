@@ -1,4 +1,5 @@
 import 'package:application/services/api_client.dart';
+import 'package:application/services/server_config.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wifi_scan/wifi_scan.dart';
@@ -89,19 +90,28 @@ class WifiService {
       return AttendanceResult(success: false, message: 'Hiç WiFi ağı bulunamadı');
     }
 
-    // 4. C# backend'e gönder
+    // 4. C# backend'e gönder — tüm görünen AP'leri gönder (eduroam filtresi kaldırıldı)
     try {
       final token = await _getToken();
+      final accessPoints = aps
+          .where((ap) => ap.level != 0)
+          .toList()
+        ..sort((a, b) => b.level.compareTo(a.level));
+
+      if (accessPoints.isEmpty) {
+        return AttendanceResult(
+          success: false,
+          message: 'Geçerli sinyal seviyesinde WiFi ağı bulunamadı',
+        );
+      }
+
       await _dio.post(
         '/api/Wifi/scans',
         data: {
           'studentId': null,
           'sessionId': sessionId,
           'scannedAtUtc': DateTime.now().toUtc().toIso8601String(),
-          'accessPoints': aps
-              .where((ap) => 
-                ap.level != 0 && 
-                (ap.ssid.toLowerCase().contains("eduroam")))
+          'accessPoints': accessPoints
               .take(20)
               .map((ap) => {'bssid': ap.bssid, 'rssi': ap.level})
               .toList(),
@@ -109,9 +119,21 @@ class WifiService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      return AttendanceResult(success: true, message: 'Yoklama alındı ✓');
+      return AttendanceResult(success: true, message: 'WiFi taraması gönderildi ✓');
     } on DioException catch (e) {
-      final detail = e.response?.data?['errors']?.first ?? e.message;
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        return AttendanceResult(
+          success: false,
+          message: 'Sunucuya bağlanılamadı (${ServerConfig.baseUrl}). '
+              'Settings > Server Address adresini kontrol edin. '
+              'Android emulator: http://10.0.2.2:9001 | '
+              'Fiziksel telefon: http://BILGISAYAR_IP:9001',
+        );
+      }
+      final detail = e.response?.data?['errors']?.first ??
+          e.response?.data?['message'] ??
+          e.message;
       return AttendanceResult(success: false, message: detail.toString());
     }
   }

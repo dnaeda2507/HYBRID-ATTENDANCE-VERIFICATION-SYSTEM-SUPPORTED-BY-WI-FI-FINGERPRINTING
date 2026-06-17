@@ -1,0 +1,5 @@
+
+module wifi_scan.Swift {
+  header "wifi_scan-Swift.h"
+  requires objc
+}

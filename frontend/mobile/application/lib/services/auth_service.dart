@@ -32,7 +32,7 @@ class AuthService {
         return false;
       }
 
-      final token = payload['jwToken'] as String?;
+      final token = (payload['jwToken'] ?? payload['JWToken']) as String?;
       final userId = payload['id']?.toString();
 
       print('Extracted token: $token');
@@ -53,8 +53,15 @@ class AuthService {
       await _storage.write(key: 'user_id', value: userId);
       return true;
     } on DioException catch (e) {
-      print('Login exception: ${e.response?.statusCode} ${e.message}');
-      if (e.response != null) {
+      final baseUrl = _dio.options.baseUrl;
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.response == null) {
+        print(
+          'Login connection failed ($baseUrl): ${e.type} ${e.message}',
+        );
+      } else {
+        print('Login exception: ${e.response?.statusCode} ${e.message}');
         print('Login error response data: ${e.response?.data}');
       }
       return false;

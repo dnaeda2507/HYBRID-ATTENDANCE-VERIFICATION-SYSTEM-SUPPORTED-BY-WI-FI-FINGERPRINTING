@@ -101,7 +101,8 @@ namespace CleanArchitecture.Infrastructure.Services
                 else
                 {
                     _logger.LogInformation(
-                        "WiFi tahmin başarısız veya eşleşmedi. Confidence={Confidence}", prediction?.Confidence);
+                        "WiFi tahmin başarısız veya eşleşmedi. Matched={Matched}, Confidence={Confidence}, Message={Message}",
+                        prediction?.Matched, prediction?.Confidence, prediction?.Message);
                 }
             }
             catch (Exception ex)
@@ -145,6 +146,13 @@ namespace CleanArchitecture.Infrastructure.Services
             request.Headers.Add("X-Forwarded-For", clientIp);
 
             var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogError(
+                    "FastAPI /predict başarısız: Status={StatusCode}, Body={Body}, Student={StudentId}, ClientIp={ClientIp}",
+                    (int)response.StatusCode, errorBody, studentId, clientIp);
+            }
             response.EnsureSuccessStatusCode();
             var jsonOptions = new System.Text.Json.JsonSerializerOptions
             {

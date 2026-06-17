@@ -1,0 +1,21 @@
+{
+  "" : {
+    "const-values" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary.swiftconstvalues",
+    "dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary.d",
+    "diagnostics" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary.dia",
+    "emit-module-dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary-emit-module.dia",
+    "pch" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/flutter_secure_storage-primary.swiftdeps"
+  },
+  "/Users/dilanguler/.pub-cache/hosted/pub.dev/flutter_secure_storage-9.2.4/ios/Classes/FlutterSecureStorage.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/FlutterSecureStorage.o",
+    "llvm-bc" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/FlutterSecureStorage.bc",
+    "object" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/FlutterSecureStorage.o"
+  },
+  "/Users/dilanguler/.pub-cache/hosted/pub.dev/flutter_secure_storage-9.2.4/ios/Classes/SwiftFlutterSecureStoragePlugin.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/SwiftFlutterSecureStoragePlugin.o",
+    "llvm-bc" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/SwiftFlutterSecureStoragePlugin.bc",
+    "object" : "/Users/dilanguler/Desktop/HYBRID-ATTENDANCE-VERIFICATION-SYSTEM-SUPPORTED-BY-WI-FI-FINGERPRINTING/frontend/mobile/application/ios/build/Pods.build/Release-iphoneos/flutter_secure_storage.build/Objects-normal/arm64/SwiftFlutterSecureStoragePlugin.o"
+  }
+}

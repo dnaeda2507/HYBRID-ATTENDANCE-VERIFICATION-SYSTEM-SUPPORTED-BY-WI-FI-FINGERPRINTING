@@ -34,8 +34,8 @@ def get_current_user(
             token,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
-            audience="CoreIdentityUser",
-            issuer="CoreIdentity",
+            audience=settings.JWT_AUDIENCE,
+            issuer=settings.JWT_ISSUER,
         )
         # C# token'ında kullanıcı ID'si "uid" alanında
         user_id: str = payload.get("uid")

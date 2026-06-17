@@ -26,12 +26,12 @@ async def _ip_middleware(request, call_next):
 @app.on_event("startup")
 def startup():
     WifiBase.metadata.create_all(bind=engine)
-    
-    # Security tabloları ve varsayılan konfigürasyonları initialize et
-    from app.core.database import get_db
+
+    from app.core.database import get_db, ensure_schema_compat
     from app.services.security_validation import initialize_default_networks
-    
+
     try:
+        ensure_schema_compat()
         db = next(get_db())
         initialize_default_networks(db)
         db.close()

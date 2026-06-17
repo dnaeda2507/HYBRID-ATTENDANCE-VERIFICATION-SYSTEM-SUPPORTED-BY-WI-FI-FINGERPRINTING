@@ -34,6 +34,7 @@ class WifiTrainingSample(WifiBase):
     id = Column(String(36), primary_key=True, default=_uuid)
     classroom_id = Column(String(36), ForeignKey("wifi_classrooms.id"), nullable=False)
     scanned_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     notes = Column(Text, nullable=True)
 
     classroom = relationship("Classroom", back_populates="training_samples")

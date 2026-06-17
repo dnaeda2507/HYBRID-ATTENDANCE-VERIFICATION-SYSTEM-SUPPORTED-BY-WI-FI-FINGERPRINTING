@@ -16,6 +16,7 @@ from app.models.wifi_models import (
     SecurityEvent,
     PredictionSecurityAudit,
 )
+from app.core.database import settings
 
 
 # ─── Konfigürasyon ───────────────────────────────────────────────────────────
@@ -93,12 +94,14 @@ def validate_ip_address(
         "validation_result": "unknown",
     }
     
-    # Loopback = localhost/Docker iç trafiği — VPN değil, ama okul ağında da sayılmaz
+    # Loopback = localhost/internal servis trafiği (Swagger test, C# backend proxy)
     if is_loopback_ip(ip_address):
-        result["validation_result"] = "loopback"
-        result["is_vpn_suspected"] = False   # ✅ Düzeltildi: loopback ≠ VPN
-        result["is_valid"] = False
-        return False, result
+        result["validation_result"] = "loopback_internal"
+        result["is_vpn_suspected"] = False
+        result["is_valid"] = True        # ✅ Internal test olarak geçerli say
+        result["in_network"] = True      # ✅ Okul ağında sayılır
+        return True, result
+
     
     # Okul ağında mı kontrol et
     configs = db.query(NetworkConfiguration).filter(
@@ -126,6 +129,15 @@ def validate_ip_address(
         result["is_vpn_suspected"] = True
         result["validation_result"] = "public_ip_suspected_vpn"
         result["is_valid"] = False
+
+    # Geliştirme ortamında private/loopback IP'leri kabul et
+    if not result["is_valid"] and settings.ENVIRONMENT == "development":
+        if is_private_ip(ip_address) or is_loopback_ip(ip_address):
+            result["is_valid"] = True
+            result["in_network"] = True
+            result["validation_result"] = "dev_mode_accepted"
+            result["is_vpn_suspected"] = False
+            result["is_proxy_suspected"] = False
     
     # Log kaydet
     log = IPValidationLog(
@@ -306,7 +318,10 @@ def log_prediction_audit(
     )
     
     # İsteğin geçerli olup olmadığını belirle
-    is_valid = ip_valid and (bssid_whitelisted > 0) and (confidence_score >= 0.60)
+    if settings.ENVIRONMENT == "development":
+        is_valid = ip_valid and (confidence_score >= 0.60)
+    else:
+        is_valid = ip_valid and (bssid_whitelisted > 0) and (confidence_score >= 0.60)
     
     # Audit kaydı oluştur
     audit = PredictionSecurityAudit(

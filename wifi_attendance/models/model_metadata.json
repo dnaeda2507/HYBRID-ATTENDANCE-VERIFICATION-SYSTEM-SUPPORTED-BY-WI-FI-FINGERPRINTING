@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "message": "Model ba\u015far\u0131yla e\u011fitildi \u2713",
+  "total_samples": 632,
+  "original_samples": 632,
+  "total_bssids": 11,
+  "classrooms": 3,
+  "accuracy": 0.962,
+  "accuracy_std": 0.0232,
+  "class_names": [
+    "D204",
+    "D206",
+    "D205"
+  ],
+  "model_type": "Ensemble",
+  "knn_k": 5,
+  "rf_params": {
+    "max_depth": 5,
+    "min_samples_leaf": 4,
+    "min_samples_split": 2,
+    "n_estimators": 50
+  },
+  "rssi_normalizer": "minmax",
+  "missing_rssi_strategy": "mean",
+  "confidence_threshold": 0.6,
+  "timestamp": "2026-05-06T19:01:05.863766"
+}
